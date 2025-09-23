@@ -4,12 +4,6 @@ defmodule RoomsWeb.SessionController do
   def me(conn, _params) do
     {updated_conn, session_data} = get_or_create_session(conn)
 
-    # Добавляем информацию о версии приложения
-    session_data = Map.put(session_data, :talkrooms, %{
-      version: 39,
-      whatsnew: "Базовая версия TalkRooms с анонимными сессиями"
-    })
-
     json(updated_conn, session_data)
   end
 
@@ -26,9 +20,7 @@ defmodule RoomsWeb.SessionController do
   defp get_or_create_session(conn) do
     case get_session(conn, "session_data") do
       nil ->
-        # Создаем новую анонимную сессию
         session_data = create_initial_session()
-        # Сохраняем в сессии (куки)
         conn = put_session(conn, "session_data", session_data)
         {conn, session_data}
 
