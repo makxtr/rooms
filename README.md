@@ -22,14 +22,43 @@
 
 ## Установка и запуск
 
-### 1. Клонирование репозитория
+### Быстрый запуск с помощью Makefile
+
+Для быстрого старта используйте команды Makefile:
 
 ```bash
-git clone <repository-url>
-cd talkrooms
+# Первоначальная настройка проекта
+make setup
+
+# Запуск всех сервисов
+make start
+
+# Проверка статуса сервисов
+make status
+
+# Остановка всех сервисов
+make stop
+
+# Просмотр логов
+make logs
+
+# Запуск только бэкенда для разработки
+make dev-backend
+
+# Запуск только фронтенда для разработки
+make dev-frontend
 ```
 
-### 2. Настройка и запуск бэкенда
+### Ручная установка
+
+#### 1. Клонирование репозитория
+
+```bash
+git clone https://github.com/makxtr/rooms.git
+cd rooms
+```
+
+#### 2. Настройка и запуск бэкенда
 
 ```bash
 # Переходим в папку бэкенда
@@ -59,13 +88,13 @@ mix phx.server
 
 Бэкенд будет доступен по адресу: `http://localhost:4000`
 
-### 3. Настройка и запуск фронтенда
+#### 3. Настройка и запуск фронтенда
 
 Откройте новый терминал:
 
 ```bash
-# Переходим в папку development
-cd development
+# Переходим в папку front
+cd front
 
 # Запускаем статический HTTP сервер на Python
 python3 -m http.server 3000
@@ -119,11 +148,10 @@ talkrooms/
 │   ├── config/          # Configuration files
 │   ├── priv/           # Static assets and migrations
 │   └── test/           # Tests
-├── development/         # Frontend source
-│   ├── script/         # JavaScript files
-│   ├── style/          # CSS files
-│   └── index.html      # Main HTML file
-└── production/         # Built frontend (generated)
+└── front/               # Frontend source
+    ├── script/         # JavaScript files
+    ├── style/          # CSS files
+    └── index.html      # Main HTML file
 ```
 
 ### Полезные команды

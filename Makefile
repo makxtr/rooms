@@ -37,7 +37,7 @@ start: ## Запустить все сервисы (PostgreSQL, Backend, Fronten
 	@echo "$(YELLOW)Запуск Phoenix сервера...$(NC)"
 	@cd back && nohup mix phx.server > ../phoenix.log 2>&1 & echo $$! > ../phoenix.pid
 	@echo "$(YELLOW)Запуск фронтенд сервера...$(NC)"
-	@cd development && nohup python3 -m http.server 3000 > ../frontend.log 2>&1 & echo $$! > ../frontend.pid
+	@cd front && nohup python3 -m http.server 3000 > ../frontend.log 2>&1 & echo $$! > ../frontend.pid
 	@sleep 3
 	@echo ""
 	@echo "$(GREEN)🎉 TalkRooms запущен!$(NC)"
@@ -128,6 +128,10 @@ dev-backend: ## Запустить только бэкенд для разраб
 	@cd back && mix ecto.migrate --quiet || echo "Миграции уже выполнены"
 	@echo "$(YELLOW)Запуск Phoenix в интерактивном режиме...$(NC)"
 	@cd back && mix phx.server
+
+dev-frontend: ## Запустить только фронтенд для разработки
+	@echo "$(GREEN)🔧 Запуск фронтенда для разработки...$(NC)"
+	@cd front && python3 -m http.server 3000
 
 restart: stop start ## Перезапустить все сервисы
 
