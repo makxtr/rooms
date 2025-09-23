@@ -12,9 +12,11 @@ defmodule RoomsWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug :fetch_session
     plug CORSPlug, origin: ["http://localhost:3000", "http://localhost:5173"],
-                   headers: ["Content-Type", "Authorization"],
-                   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
+                   headers: ["Content-Type", "Authorization", "Cookie"],
+                   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+                   credentials: true
   end
 
   scope "/", RoomsWeb do

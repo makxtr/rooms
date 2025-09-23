@@ -25,7 +25,10 @@
             method: method,
             data: data && JSON.stringify(data),
             contentType: 'application/json',
-            crossDomain: true
+            crossDomain: true,
+            xhrFields: {
+                withCredentials: true
+            }
         });
     }
 

@@ -93,6 +93,8 @@ var Me = new Events();
 (function() {
 
     function update(data) {
+        Me.session_id = data.session_id;
+        Me.nickname = data.nickname;
         Me.rand_nickname = Boolean(data.rand_nickname);
         Me.authorized = Boolean(data.user_id);
         Me.provider_id = data.provider_id;
