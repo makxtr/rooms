@@ -1,0 +1,83 @@
+    warning: variable "payload" is unused (if the variable is not meant to be used, prefix it with an underscore)
+    │
+ 24 │   def handle_in("message", %{"body" => body} = payload, socket) do
+    │                                                ~~~~~~~
+    │
+    └─ lib/rooms_web/channels/room_channel.ex:24:48: RoomsWeb.RoomChannel.handle_in/3
+
+[error] `inotify-tools` is needed to run `file_system` for your system, check https://github.com/rvoicilas/inotify-tools/wiki for more information about how to install it. If it's already installed but not be found, appoint executable file with `config.exs` or `FILESYSTEM_FSINOTIFY_EXECUTABLE_FILE` env.
+[warning] Not able to start file_system worker, reason: {:error, :fs_inotify_bootstrap_error}
+[warning] Could not start Phoenix live-reload because we cannot listen to the file system.
+You don't need to worry! This is an optional feature used during development to
+refresh your browser when you save files and it does not affect production.
+
+[info] Running RoomsWeb.Endpoint with Bandit 1.8.0 at 127.0.0.1:4000 (http)
+[info] Access RoomsWeb.Endpoint at http://localhost:4000
+[watch] build finished, watching for changes...
+≈ tailwindcss v4.1.7
+
+/*! 🌼 daisyUI 5.0.35 */
+sh: 1: watchman: not found
+Done in 118ms
+[info] GET /api/sessions/me
+[debug] Processing with RoomsWeb.SessionController.me/2
+  Parameters: %{}
+  Pipelines: [:api]
+[info] Sent 200 in 29ms
+[info] POST /api/sockets
+[debug] Processing with RoomsWeb.SocketController.create/2
+  Parameters: %{}
+  Pipelines: [:api]
+[info] Sent 200 in 2ms
+[info] CONNECTED TO RoomsWeb.UserSocket in 31µs
+  Transport: :websocket
+  Serializer: Phoenix.Socket.V2.JSONSerializer
+  Parameters: %{"token" => "746f6b656e5f1252d744f3156f4024db7ea58a168bce", "vsn" => "2.0.0"}
+[info] GET /api/
+[debug] ** (Phoenix.Router.NoRouteError) no route found for GET /api (RoomsWeb.Router)
+    (rooms 0.1.0) deps/phoenix/lib/phoenix/router.ex:465: RoomsWeb.Router.call/2
+    (rooms 0.1.0) lib/rooms_web/endpoint.ex:1: RoomsWeb.Endpoint.plug_builder_call/2
+    (rooms 0.1.0) deps/plug/lib/plug/debugger.ex:155: RoomsWeb.Endpoint."call (overridable 3)"/2
+    (rooms 0.1.0) lib/rooms_web/endpoint.ex:1: RoomsWeb.Endpoint.call/2
+    (phoenix 1.8.1) lib/phoenix/endpoint/sync_code_reload_plug.ex:22: Phoenix.Endpoint.SyncCodeReloadPlug.do_call/4
+    (bandit 1.8.0) lib/bandit/pipeline.ex:131: Bandit.Pipeline.call_plug!/2
+    (bandit 1.8.0) lib/bandit/pipeline.ex:42: Bandit.Pipeline.run/5
+    (bandit 1.8.0) lib/bandit/http1/handler.ex:13: Bandit.HTTP1.Handler.handle_data/3
+    (bandit 1.8.0) lib/bandit/delegating_handler.ex:18: Bandit.DelegatingHandler.handle_data/3
+    (bandit 1.8.0) lib/bandit/delegating_handler.ex:8: Bandit.DelegatingHandler.handle_continue/2
+    (stdlib 5.2.3.3) gen_server.erl:1085: :gen_server.try_handle_continue/3
+    (stdlib 5.2.3.3) gen_server.erl:995: :gen_server.loop/7
+    (stdlib 5.2.3.3) proc_lib.erl:241: :proc_lib.init_p_do_apply/3
+
+[info] GET /api/
+[debug] ** (Phoenix.Router.NoRouteError) no route found for GET /api (RoomsWeb.Router)
+    (rooms 0.1.0) deps/phoenix/lib/phoenix/router.ex:465: RoomsWeb.Router.call/2
+    (rooms 0.1.0) lib/rooms_web/endpoint.ex:1: RoomsWeb.Endpoint.plug_builder_call/2
+    (rooms 0.1.0) deps/plug/lib/plug/debugger.ex:155: RoomsWeb.Endpoint."call (overridable 3)"/2
+    (rooms 0.1.0) lib/rooms_web/endpoint.ex:1: RoomsWeb.Endpoint.call/2
+    (phoenix 1.8.1) lib/phoenix/endpoint/sync_code_reload_plug.ex:22: Phoenix.Endpoint.SyncCodeReloadPlug.do_call/4
+    (bandit 1.8.0) lib/bandit/pipeline.ex:131: Bandit.Pipeline.call_plug!/2
+    (bandit 1.8.0) lib/bandit/pipeline.ex:42: Bandit.Pipeline.run/5
+    (bandit 1.8.0) lib/bandit/http1/handler.ex:13: Bandit.HTTP1.Handler.handle_data/3
+    (bandit 1.8.0) lib/bandit/delegating_handler.ex:18: Bandit.DelegatingHandler.handle_data/3
+    (bandit 1.8.0) lib/bandit/delegating_handler.ex:8: Bandit.DelegatingHandler.handle_continue/2
+    (stdlib 5.2.3.3) gen_server.erl:1085: :gen_server.try_handle_continue/3
+    (stdlib 5.2.3.3) gen_server.erl:995: :gen_server.loop/7
+    (stdlib 5.2.3.3) proc_lib.erl:241: :proc_lib.init_p_do_apply/3
+
+[info] GET /api/sessions/me
+[debug] Processing with RoomsWeb.SessionController.me/2
+  Parameters: %{}
+  Pipelines: [:api]
+[info] Sent 200 in 969µs
+[info] POST /api/sockets
+[debug] Processing with RoomsWeb.SocketController.create/2
+  Parameters: %{}
+  Pipelines: [:api]
+[info] Sent 200 in 1ms
+[info] CONNECTED TO RoomsWeb.UserSocket in 31µs
+  Transport: :websocket
+  Serializer: Phoenix.Socket.V2.JSONSerializer
+  Parameters: %{"token" => "746f6b656e5fe6789dcde0135f8afb6b58bbb84419fc", "vsn" => "2.0.0"}
+[notice] SIGTERM received - shutting down
+

@@ -1,0 +1,77 @@
+Обязательные REST API эндпоинты:
+
+  1. Сессии (Sessions)
+
+  - GET /api/sessions/me - получить данные текущего пользователя
+  - PATCH /api/sessions/me - обновить сессию
+
+  2. WebSocket подключения
+
+  - POST /api/sockets - создать новое WebSocket соединение
+  - GET /api/sockets/{socket_id} - проверить существование сокета
+
+  3. Комнаты (Rooms)
+
+  - GET /api/rooms/{hash} - получить данные комнаты
+  - POST /api/rooms - создать новую комнату
+  - POST /api/rooms/{hash}/enter - войти в комнату
+  - POST /api/rooms/search - найти случайную комнату
+
+  4. Сообщения (Messages)
+
+  - GET /api/messages - получить сообщения с фильтрацией
+  - POST /api/messages - отправить новое сообщение
+
+  5. Роли пользователей (Roles)
+
+  - GET /api/roles/{role_id} - получить данные роли
+  - GET /api/roles - получить список ролей в комнате
+
+  WebSocket сервер:
+
+  URL подключения:
+
+  wss://your-domain.com/sockets/{token}
+
+  Основные события:
+
+  - message.created - новое сообщение
+  - role.online/offline - пользователь вошел/вышел
+  - room.topic.updated - изменилось название комнаты
+
+  Минимальная структура данных:
+
+  Пользователь (Session):
+
+  {
+    user_id: number|null,
+    provider_id: number|null,
+    rand_nickname: boolean,
+    ignores: [],
+    subscriptions: [],
+    rooms: [],
+    recent_rooms: []
+  }
+
+  Комната (Room):
+
+  {
+    room_id: number,
+    hash: string,
+    topic: string,
+    level: number, // 0=открытая, 20=приватная
+    searchable: boolean,
+    watched: boolean
+  }
+
+  Сообщение (Message):
+
+  {
+    message_id: number,
+    room_id: number,
+    role_id: number,
+    nickname: string,
+    content: string,
+    created: string, // ISO timestamp
+    recipient_role_id: number|null
+  }

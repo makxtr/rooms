@@ -1,0 +1,82 @@
+.hall {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+    z-index: 2;
+    width: 100%;
+    background: #F8F8F8;
+    overflow-y: auto;
+}
+.hall-content {
+    margin-right: 40px;
+    padding: 22px 0 22px;
+}
+.hall-content::after {
+    content: '';
+    display: table;
+    clear: both;
+}
+
+/* Columns */
+.hall-section {
+    float: left;
+    width: 50%;
+    box-sizing: border-box;
+    min-width: 300px;
+    max-width: 420px;
+    margin-bottom: 24px;
+    padding-left: 40px;
+}
+.hall-title {
+    margin: 0 0 10px;
+    font-weight: normal;
+    font-size: 22px;
+    line-height: 22px;
+}
+
+/* Shuffle */
+.hall-shuffle {
+    margin: 0 0 24px;
+}
+.hall-shuffle .link {
+    border-bottom: 1px solid rgba(27, 111, 133, .5);
+    color: #19778F;
+    text-decoration: none;
+}
+
+/* Rooms list */
+.rooms-list {
+    margin: 15px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 19px;
+    line-height: 19px;
+}
+.room {
+    position: relative;
+    margin: 0 0 14px 16px;
+    padding: 0;
+}
+.room::before {
+    content: '#';
+    position: absolute;
+    top: 1px;
+    left: -16px;
+    color: #838180;
+}
+.hall a {
+    border-bottom: 1px solid rgba(27, 111, 133, .5);
+    color: #19778F;
+    text-decoration: none;
+}
+
+/* Create button */
+.hall-create > button {
+    padding: 6px 23px;
+}
+.hall-create-failed {
+    display: none;
+    margin: 0;
+}

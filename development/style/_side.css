@@ -1,0 +1,86 @@
+/* Subscriptions */
+.side-subscriptions {
+    margin: 16px 0;
+    padding: 0;
+    list-style: none;
+    line-height: 20px;
+}
+.subscription,
+.subscriptions-other {
+    position: relative;
+    margin-left: 26px;
+}
+.subscription {
+    border-bottom: 1px solid #CECCCA;
+    box-shadow: 0 1px 0 #F3F1F0;
+}
+.subscription::before,
+.subscriptions-other::before {
+    position: absolute;
+    top: 9px;
+    left: 0;
+    color: #838180;
+}
+.subscription::before {
+    content: '#';
+}
+.subscriptions-other::before {
+    content: '+';
+}
+.side-subscriptions a {
+    position: relative; /* Clickabke area above unread icon */
+    z-index: 1;
+    display: block;
+    padding: 8px 40px 8px 16px;
+    color: #19778F;
+    text-decoration: none;
+}
+
+/* Unread messages icon */
+.subscription-unread::after {
+    content: '';
+    position: absolute;
+    right: 19px;
+    top: 13px;
+    width: 11px;
+    height: 11px;
+    border: 1px solid #D7AF51;
+    border-radius: 7px;
+    background: #FACF69;
+}
+
+/* Highlight selected room */
+.subscription-selected {
+    margin-left: 13px;
+    padding-left: 13px;
+    padding-bottom: 1px;
+    background: rgba(126, 154, 158, 0.25);
+    border-radius: 4px 0 0 4px;
+    border-bottom: none;
+    box-shadow:
+        0 -1px 0 #EBE9E8,
+        0 1px 0 #CFD6D6 inset;
+}
+.subscription-selected::before {
+    left: 13px;
+}
+.subscription-selected a {
+    cursor: default;
+}
+
+/* Prevent unread icon in selected room */
+.subscription-selected::after {
+    display: none;
+}
+
+.subscription-exit {
+    position: absolute;
+    z-index: 2;
+    right: 14px;
+    top: 8px;
+    width: 23px;
+    height: 23px;
+    border-radius: 11px;
+    background: url('room/exit.svg') no-repeat 5px 5px;
+    cursor: pointer;
+}
