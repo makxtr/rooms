@@ -1,9 +1,9 @@
-defmodule Rooms.MixProject do
+defmodule Chats.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :rooms,
+      app: :chats,
       version: "0.1.0",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -20,7 +20,7 @@ defmodule Rooms.MixProject do
   # Type `mix help compile.app` for more information.
   def application do
     [
-      mod: {Rooms.Application, []},
+      mod: {Chats.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end
@@ -83,10 +83,10 @@ defmodule Rooms.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
-      "assets.build": ["compile", "tailwind rooms", "esbuild rooms"],
+      "assets.build": ["compile", "tailwind chats", "esbuild chats"],
       "assets.deploy": [
-        "tailwind rooms --minify",
-        "esbuild rooms --minify",
+        "tailwind chats --minify",
+        "esbuild chats --minify",
         "phx.digest"
       ],
       precommit: ["compile --warning-as-errors", "deps.unlock --unused", "format", "test"]

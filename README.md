@@ -68,10 +68,10 @@ cd back
 mix deps.get
 
 # Запускаем PostgreSQL в Docker
-docker run -d --name rooms_postgres \
+docker run -d --name chats_postgres \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=rooms_dev \
+  -e POSTGRES_DB=chats_dev \
   -p 5434:5432 \
   postgres:15
 

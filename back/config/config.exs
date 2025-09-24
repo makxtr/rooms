@@ -7,19 +7,19 @@
 # General application configuration
 import Config
 
-config :rooms,
-  ecto_repos: [Rooms.Repo],
+config :chats,
+  ecto_repos: [Chats.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint
-config :rooms, RoomsWeb.Endpoint,
+config :chats, ChatsWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
-    formats: [html: RoomsWeb.ErrorHTML, json: RoomsWeb.ErrorJSON],
+    formats: [html: ChatsWeb.ErrorHTML, json: ChatsWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: Rooms.PubSub,
+  pubsub_server: Chats.PubSub,
   live_view: [signing_salt: "4NxJtoRO"]
 
 # Configures the mailer
@@ -29,12 +29,12 @@ config :rooms, RoomsWeb.Endpoint,
 #
 # For production it's recommended to configure a different adapter
 # at the `config/runtime.exs`.
-config :rooms, Rooms.Mailer, adapter: Swoosh.Adapters.Local
+config :chats, Chats.Mailer, adapter: Swoosh.Adapters.Local
 
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",
-  rooms: [
+  chats: [
     args:
       ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --alias:@=.),
     cd: Path.expand("../assets", __DIR__),
@@ -44,7 +44,7 @@ config :esbuild,
 # Configure tailwind (the version is required)
 config :tailwind,
   version: "4.1.7",
-  rooms: [
+  chats: [
     args: ~w(
       --input=assets/css/app.css
       --output=priv/static/assets/css/app.css
