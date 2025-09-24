@@ -21,7 +21,7 @@ defmodule RoomsWeb.RoomChannel do
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room:lobby).
   @impl true
-  def handle_in("message", %{"body" => body} = payload, socket) do
+  def handle_in("message", %{"body" => body} = _payload, socket) do
     message = %{
       message_id: :rand.uniform(10000),
       body: body,
