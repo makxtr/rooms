@@ -1,6 +1,6 @@
 # TalkRooms - Makefile для управления приложением
 
-.PHONY: help start stop status setup clean logs
+.PHONY: help start stop status setup clean logs test
 
 # Цвета для вывода
 GREEN=\033[0;32m
@@ -109,6 +109,10 @@ logs: ## Показать логи всех сервисов
 	@echo ""
 	@echo "$(YELLOW)=== PostgreSQL логи ====$(NC)"
 	@docker logs --tail 10 rooms_postgres 2>/dev/null || echo "PostgreSQL логи недоступны"
+
+test: ## Запустить тесты бэкенда
+	@echo "$(GREEN)🧪 Запуск тестов TalkRooms...$(NC)"
+	@cd back && mix test
 
 clean: stop ## Полная очистка (остановка + удаление логов и PID файлов)
 	@echo "$(RED)🧹 Очистка TalkRooms...$(NC)"
