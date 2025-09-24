@@ -1,2 +1,6 @@
 node_modules/
 /phoenix.log
+
+.vscode
+
+/frontend.log

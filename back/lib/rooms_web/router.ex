@@ -45,6 +45,7 @@ defmodule RoomsWeb.Router do
     post "/rooms", RoomController, :create
     post "/rooms/:hash/enter", RoomController, :enter
     post "/rooms/search", RoomController, :search
+    patch "/rooms/:hash", RoomController, :update
 
     # Messages
     get "/messages", MessageController, :index
