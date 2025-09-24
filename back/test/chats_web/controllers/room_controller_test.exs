@@ -1,7 +1,7 @@
 defmodule ChatsWeb.RoomControllerTest do
   use ChatsWeb.ConnCase
 
-  alias Chats.Room
+  alias Chats.RoomContext
 
   # Fixture to create a test room
   defp room_fixture(attrs \\ %{}) do
@@ -13,7 +13,7 @@ defmodule ChatsWeb.RoomControllerTest do
     }
 
     attrs = Map.merge(default_attrs, attrs)
-    {:ok, room} = Chats.create_room(attrs)
+    {:ok, room} = RoomContext.create_room(attrs)
     room
   end
 
@@ -134,7 +134,7 @@ defmodule ChatsWeb.RoomControllerTest do
       } = response
 
       # Verify room was created
-      assert Chats.room_exists?(hash)
+      assert RoomContext.room_exists?(hash)
     end
   end
 

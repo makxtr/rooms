@@ -1,14 +1,16 @@
 defmodule ChatsWeb.RoomController do
   use ChatsWeb, :controller
 
+  alias Chats.RoomContext
+
   @doc """
   GET /api/rooms/:hash - получить данные комнаты
   """
   def show(conn, %{"hash" => hash}) do
-    case Chats.fetch_room_by_hash(hash) do
+    case RoomContext.fetch_room_by_hash(hash) do
       {:ok, room} ->
         json(conn, %{
-          room: Chats.format_room_response(room)
+          room: RoomContext.format_room_response(room)
         })
 
       {:error, :not_found} ->
@@ -29,11 +31,11 @@ defmodule ChatsWeb.RoomController do
     # Добавляем creator_session_id в параметры
     params_with_creator = Map.put(params, "creator_session_id", creator_session_id)
 
-    case Chats.create_room(params_with_creator) do
+    case RoomContext.create_room(params_with_creator) do
       {:ok, room} ->
         conn
         |> put_status(:created)
-        |> json(Chats.format_room_response(room))  # Возвращаем напрямую для фронта
+        |> json(RoomContext.format_room_response(room))  # Возвращаем напрямую для фронта
 
       {:error, changeset} ->
         conn
@@ -53,7 +55,7 @@ defmodule ChatsWeb.RoomController do
     creator_session_id = if session_data, do: session_data[:session_id], else: nil
     attrs = %{"creator_session_id" => creator_session_id}
 
-    case Chats.find_or_create_room(hash, attrs) do
+    case RoomContext.find_or_create_room(hash, attrs) do
       {:ok, room} ->
         # Определяем права пользователя
         session_data = get_session(conn, "session_data")
@@ -66,7 +68,7 @@ defmodule ChatsWeb.RoomController do
         is_admin = level >= 70  # Админ (70) или создатель (80)
 
         json(conn, %{
-          room: Chats.format_room_response(room),
+          room: RoomContext.format_room_response(room),
           subscription: %{subscription_id: "temp_#{room.id}_#{socket_id}"},
           role: %{
             role_id: "temp_role_#{socket_id}",
@@ -89,11 +91,11 @@ defmodule ChatsWeb.RoomController do
   PATCH /api/rooms/:hash - обновить комнату
   """
   def update(conn, %{"hash" => hash} = params) do
-    case Chats.fetch_room_by_hash(hash) do
+    case RoomContext.fetch_room_by_hash(hash) do
       {:ok, room} ->
-        case Chats.update_room(room, params) do
+        case RoomContext.update_room(room, params) do
           {:ok, updated_room} ->
-            json(conn, Chats.format_room_response(updated_room))
+            json(conn, RoomContext.format_room_response(updated_room))
 
           {:error, changeset} ->
             conn
@@ -112,12 +114,12 @@ defmodule ChatsWeb.RoomController do
   POST /api/rooms/search - найти случайную комнату
   """
   def search(conn, _params) do
-    case Chats.get_random_room() do
+    case RoomContext.get_random_room() do
       nil ->
         # Если нет комнат, создаем дефолтную
-        case Chats.find_or_create_room("general", %{"topic" => "Общий чат"}) do
+        case RoomContext.find_or_create_room("general", %{"topic" => "Общий чат"}) do
           {:ok, room} ->
-            json(conn, Chats.format_room_response(room))  # Возвращаем напрямую для фронта
+            json(conn, RoomContext.format_room_response(room))  # Возвращаем напрямую для фронта
 
           {:error, changeset} ->
             conn
@@ -126,7 +128,7 @@ defmodule ChatsWeb.RoomController do
         end
 
       room ->
-        json(conn, Chats.format_room_response(room))  # Возвращаем напрямую для фронта
+        json(conn, RoomContext.format_room_response(room))  # Возвращаем напрямую для фронта
     end
   end
 

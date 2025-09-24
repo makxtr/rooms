@@ -2,7 +2,6 @@ defmodule Chats.RoomContextTest do
   use ExUnit.Case, async: true
   use Chats.DataCase
   alias Chats.RoomContext
-  alias Chats.Room
 
   # Fixture to create a test room
   defp room_fixture(attrs \\ %{}) do
