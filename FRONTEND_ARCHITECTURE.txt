@@ -1,0 +1,137 @@
+# TalkRooms - Frontend Architecture
+
+## 📁 Структура фронтенда
+
+assets/
+├── css/                    # Стили
+│   ├── app.css            # 📦 Объединенный файл всех стилей
+│   ├── _elements.css      # 🧱 Базовые UI элементы
+│   ├── _layout.css        # 📐 Макет и сетка
+│   ├── _side.css          # 📱 Боковая панель
+│   ├── _hall.css          # 📋 Список комнат
+│   ├── common.css         # 🌐 Общие стили
+│   ├── main.css           # 🏠 Главная страница
+│   ├── about.css          # ℹ️ О приложении
+│   ├── profile.css        # 👤 Профили
+│   ├── settings.css       # ⚙️ Настройки
+│   ├── datepicker.css     # 📅 Календарь
+│   ├── mobile.css         # 📱 Мобильные стили
+│   ├── room/              # SVG иконки для комнат
+│   └── profile/           # SVG иконки для профилей
+├── js/                     # JavaScript
+│   ├── app.js             # 🚀 Точка входа, загрузчик модулей
+│   ├── events.js          # 📡 Система событий (EventEmitter)
+│   ├── utility.js         # 🛠️ Утилиты (Template, $window, $document)
+│   ├── rest.js            # 🌐 REST API клиент
+│   ├── models/            # Модели данных
+│   │   ├── main.js        # 🎯 Router, Socket, Me (сессия)
+│   │   ├── rooms.js       # 🏠 Управление комнатами
+│   │   ├── room.js        # 📦 Логика отдельной комнаты
+│   │   ├── roles.js       # 👥 Роли и права пользователей
+│   │   └── userpics.js    # 🖼️ Аватары пользователей
+│   ├── views/             # Представления (UI компоненты)
+│   │   ├── about.js       # 🏠 Главная страница
+│   │   ├── hall.js        # 📋 Список комнат
+│   │   ├── side.js        # 📱 Боковая панель
+│   │   ├── talk.js        # 💬 Чат и сообщения
+│   │   ├── reply.js       # ✏️ Форма ответа
+│   │   ├── room.js        # 🏠 Интерфейс комнаты
+│   │   ├── profile.js     # 👤 Профиль пользователя
+│   │   ├── settings.js    # ⚙️ Настройки
+│   │   ├── datepicker.js  # 📅 Календарь
+│   │   ├── moderate.js    # 🛡️ Модерация
+│   │   ├── admin.js       # 👑 Админ-панель
+│   │   └── ranks.js       # 🏆 Управление рангами
+│   ├── sound/             # Звуки уведомлений
+│   └── vendor/            # Внешние библиотеки
+└── tsconfig.json
+
+## 📍 Точки входа
+
+### HTML Templates (Server-Side)
+- lib/chats_web/components/layouts/root.html.heex - Root layout
+  * Подключает CSS: /assets/css/app.css
+  * Подключает JS: /assets/js/app.js
+
+- lib/chats_web/controllers/page_html/home.html.heex - Основной шаблон
+  * Содержит всю разметку приложения
+  * Структура: #about (главная) + #rooms (интерфейс комнат)
+
+### JavaScript Entry Point
+- assets/js/app.js
+  * Динамически загружает jQuery
+  * Инициализирует все модули через ES6 imports
+
+## 🏗️ Архитектура (MVC-подобная)
+
+### Поток инициализации модулей:
+1. app.js загружает jQuery
+2. utility.js → events.js → rest.js
+3. models: main.js → rooms.js → roles.js → userpics.js
+4. views: datepicker.js → about.js → room.js → side.js →
+          hall.js → talk.js → reply.js → settings.js →
+          profile.js → moderate.js → admin.js → ranks.js
+
+### Глобальные объекты:
+- Events        # Система событий
+- Template      # Шаблонизатор
+- $window       # jQuery wrapper для window
+- $document     # jQuery wrapper для document
+- Rest          # REST API клиент
+- Router        # Маршрутизация (hash routing)
+- Me            # Текущая сессия пользователя
+- Socket        # WebSocket подключение
+- Rooms         # Управление комнатами
+
+## 🔄 Взаимодействие компонентов
+
+### Коммуникация:
+- WebSocket через Phoenix Channels (real-time)
+- REST API через кастомный клиент
+- Events для внутренней коммуникации
+- Hash routing для навигации
+
+### API Endpoints:
+- GET  /api/health          # Проверка здоровья
+- GET  /api/sessions/me     # Текущая сессия
+- GET  /api/rooms/:hash     # Данные комнаты
+- POST /api/rooms           # Создание комнаты
+- GET  /api/messages        # История сообщений
+- POST /api/messages        # Отправка сообщения
+- POST /api/sockets         # Создание сокет соединения
+
+## 🎯 Особенности архитектуры
+
+1. Single Page Application - Навигация через JavaScript
+2. Component-based - Каждый view отвечает за свою область
+3. Event-driven - Компоненты общаются через события
+4. Real-time - WebSocket для живого чата
+5. Progressive Enhancement - Базовый HTML работает без JS
+6. Hybrid Architecture - Phoenix API + Vanilla JS SPA
+
+## 🛠️ Технологический стек
+
+Frontend:
+- Vanilla JavaScript (ES6 modules)
+- jQuery (динамически загружается)
+- Custom templating system
+- CSS (atomic approach)
+- WebSocket (Phoenix Channels)
+
+Backend:
+- Phoenix Framework (Elixir)
+- Phoenix Channels (WebSocket)
+- RESTful API
+- HEEX templates
+
+## 📝 Примечания для разработки
+
+- Все модули загружаются асинхронно через import()
+- Глобальные объекты создаются для совместимости между модулями
+- CSS объединен в один файл для производительности
+- SVG иконки размещены в статических папках
+- Звуки уведомлений в формате MP3/OGG
+
+Архитектура представляет собой современную гибридную систему:
+Phoenix обрабатывает server-side рендеринг и API,
+а клиентская логика реализована как SPA на vanilla JavaScript.
