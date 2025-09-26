@@ -31,19 +31,13 @@ defmodule ChatsWeb.RoomController do
     # Добавляем creator_session_id в параметры
     params_with_creator = Map.put(params, "creator_session_id", creator_session_id)
 
-    case RoomContext.create_room(params_with_creator) do
-      {:ok, room} ->
-        conn
-        |> put_status(:created)
-        |> json(RoomContext.format_room_response(room))  # Возвращаем напрямую для фронта
-
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{errors: format_changeset_errors(changeset)})
-    end
+    {:ok, room} = RoomContext.create_room(params_with_creator)
+    conn
+    |> put_status(:created)
+    |> json(RoomContext.format_room_response(room))
   end
 
+  @spec enter(Plug.Conn.t(), map()) :: Plug.Conn.t()
   @doc """
   POST /api/rooms/:hash/enter - войти в комнату
   """
@@ -55,36 +49,30 @@ defmodule ChatsWeb.RoomController do
     creator_session_id = if session_data, do: session_data[:session_id], else: nil
     attrs = %{"creator_session_id" => creator_session_id}
 
-    case RoomContext.find_or_create_room(hash, attrs) do
-      {:ok, room} ->
-        # Определяем права пользователя
-        session_data = get_session(conn, "session_data")
-        current_session_id = if session_data, do: session_data[:session_id], else: nil
-        nickname = if session_data, do: session_data[:nickname], else: "Anonymous"
+    {:ok, room} = RoomContext.find_or_create_room(hash, attrs)
 
-        # Создатель комнаты получает level 80 и права админа
-        is_creator = room.creator_session_id == current_session_id
-        level = if is_creator, do: 80, else: 0
-        is_admin = level >= 70  # Админ (70) или создатель (80)
+    # Определяем права пользователя
+    session_data = get_session(conn, "session_data")
+    current_session_id = if session_data, do: session_data[:session_id], else: nil
+    nickname = if session_data, do: session_data[:nickname], else: "Anonymous"
 
-        json(conn, %{
-          room: RoomContext.format_room_response(room),
-          subscription: %{subscription_id: "temp_#{room.id}_#{socket_id}"},
-          role: %{
-            role_id: "temp_role_#{socket_id}",
-            nickname: nickname,
-            level: level,
-            isAdmin: is_admin,
-            user_id: session_data[:user_id]
-          },
-          roles_online: []
-        })
+    # Создатель комнаты получает level 80 и права админа
+    is_creator = room.creator_session_id == current_session_id
+    level = if is_creator, do: 80, else: 0
+    is_admin = level >= 70  # Админ (70) или создатель (80)
 
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{errors: format_changeset_errors(changeset)})
-    end
+    json(conn, %{
+      room: RoomContext.format_room_response(room),
+      subscription: %{subscription_id: "temp_#{room.id}_#{socket_id}"},
+      role: %{
+        role_id: "temp_role_#{socket_id}",
+        nickname: nickname,
+        level: level,
+        isAdmin: is_admin,
+        user_id: session_data[:user_id]
+      },
+      roles_online: []
+    })
   end
 
   @doc """
@@ -93,15 +81,8 @@ defmodule ChatsWeb.RoomController do
   def update(conn, %{"hash" => hash} = params) do
     case RoomContext.fetch_room_by_hash(hash) do
       {:ok, room} ->
-        case RoomContext.update_room(room, params) do
-          {:ok, updated_room} ->
-            json(conn, RoomContext.format_room_response(updated_room))
-
-          {:error, changeset} ->
-            conn
-            |> put_status(:unprocessable_entity)
-            |> json(%{errors: format_changeset_errors(changeset)})
-        end
+        {:ok, updated_room} = RoomContext.update_room(room, params)
+        json(conn, RoomContext.format_room_response(updated_room))
 
       {:error, :not_found} ->
         conn
@@ -117,26 +98,12 @@ defmodule ChatsWeb.RoomController do
     case RoomContext.get_random_room() do
       nil ->
         # Если нет комнат, создаем дефолтную
-        case RoomContext.find_or_create_room("general", %{"topic" => "Общий чат"}) do
-          {:ok, room} ->
-            json(conn, RoomContext.format_room_response(room))  # Возвращаем напрямую для фронта
-
-          {:error, changeset} ->
-            conn
-            |> put_status(:unprocessable_entity)
-            |> json(%{errors: format_changeset_errors(changeset)})
-        end
+        {:ok, room} = RoomContext.find_or_create_room("general", %{"topic" => "Общий чат"})
+        json(conn, RoomContext.format_room_response(room))
 
       room ->
-        json(conn, RoomContext.format_room_response(room))  # Возвращаем напрямую для фронта
+        json(conn, RoomContext.format_room_response(room))
     end
   end
 
-  defp format_changeset_errors(changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-      end)
-    end)
-  end
 end

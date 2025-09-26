@@ -1,15 +1,6 @@
 import Config
 
-# Configure your database
-config :chats, Chats.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  port: 5434,
-  database: "chats_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+# Database disabled - using ETS for storage
 
 # For development, we disable any cache and enable
 # debugging and code reloading.

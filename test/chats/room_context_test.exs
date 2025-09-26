@@ -1,6 +1,6 @@
 defmodule Chats.RoomContextTest do
   use ExUnit.Case, async: true
-  use Chats.DataCase
+  use Chats.EtsCase
   alias Chats.RoomContext
 
   # Fixture to create a test room
@@ -37,7 +37,7 @@ defmodule Chats.RoomContextTest do
     test "returns {:ok, room} when room exists" do
       room = room_fixture()
       assert {:ok, found_room} = RoomContext.fetch_room_by_hash(room.hash)
-      assert found_room.id == room.id
+      assert found_room.hash == room.hash
     end
 
     test "returns {:error, :not_found} when room doesn't exist" do
@@ -67,19 +67,13 @@ defmodule Chats.RoomContextTest do
       assert String.length(room.hash) > 0
     end
 
-    test "fails with invalid attributes" do
-      attrs = %{"hash" => ""}  # empty hash
-
-      assert {:error, changeset} = RoomContext.create_room(attrs)
-      assert %{hash: ["can't be blank"]} = errors_on(changeset)
-    end
-
-    test "fails with duplicate hash" do
+    test "allows duplicate hash (ETS overwrites)" do
       room = room_fixture()
       attrs = %{"hash" => room.hash, "topic" => "Duplicate"}
 
-      assert {:error, changeset} = RoomContext.create_room(attrs)
-      assert %{hash: ["has already been taken"]} = errors_on(changeset)
+      # В ETS дубликаты перезаписывают, не ошибка
+      assert {:ok, updated_room} = RoomContext.create_room(attrs)
+      assert updated_room.topic == "Duplicate"
     end
   end
 
@@ -88,7 +82,7 @@ defmodule Chats.RoomContextTest do
       existing_room = room_fixture()
 
       assert {:ok, room} = RoomContext.find_or_create_room(existing_room.hash)
-      assert room.id == existing_room.id
+      assert room.hash == existing_room.hash
     end
 
     test "creates new room when not found" do
@@ -102,29 +96,15 @@ defmodule Chats.RoomContextTest do
   end
 
   describe "get_random_room/0" do
-    test "returns nil when no searchable rooms exist" do
-      # Create private room (not searchable for random)
-      room_fixture(%{"searchable" => false})
-
+    test "returns nil when no rooms exist" do
       assert RoomContext.get_random_room() == nil
     end
 
-    test "returns random searchable room" do
+    test "returns first room when rooms exist" do
       room = room_fixture(%{"searchable" => true, "level" => 0})
 
       result = RoomContext.get_random_room()
-      assert result.id == room.id
-    end
-  end
-
-  describe "room_exists?/1" do
-    test "returns true when room exists" do
-      room = room_fixture()
-      assert RoomContext.room_exists?(room.hash) == true
-    end
-
-    test "returns false when room doesn't exist" do
-      assert RoomContext.room_exists?("nonexistent") == false
+      assert result.hash == room.hash
     end
   end
 
@@ -141,5 +121,4 @@ defmodule Chats.RoomContextTest do
       assert response.watched == room.watched
     end
   end
-
 end

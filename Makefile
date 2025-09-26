@@ -15,36 +15,22 @@ help: ## Показать справку
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 setup: ## Первоначальная настройка проекта
-	@echo "$(GREEN)🚀 Настройка TalkRooms...$(NC)"
 	@echo "$(YELLOW)Установка зависимостей Phoenix...$(NC)"
 	mix deps.get
 	@echo "$(GREEN)✅ Настройка завершена!$(NC)"
 
-start: ## Запустить приложение (PostgreSQL + Phoenix)
-	@echo "$(GREEN)🚀 Запуск TalkRooms...$(NC)"
-	@echo "$(YELLOW)Запуск PostgreSQL в Docker...$(NC)"
-	@docker run -d --name rooms_postgres \
-		-e POSTGRES_USER=postgres \
-		-e POSTGRES_PASSWORD=postgres \
-		-e POSTGRES_DB=rooms_dev \
-		-p 5434:5432 \
-		postgres:15 || echo "PostgreSQL уже запущен или ошибка запуска"
-	@echo "$(YELLOW)Ожидание запуска базы данных...$(NC)"
-	@sleep 8
-	@echo "$(YELLOW)Создание базы данных и миграции...$(NC)"
-	@mix ecto.create --quiet || echo "База данных уже существует"
-	@mix ecto.migrate --quiet || echo "Миграции уже выполнены"
-	@echo "$(YELLOW)Запуск Phoenix сервера...$(NC)"
+start: ## Запустить приложение (Phoenix only - without database)
+	@echo "$(GREEN)Запуск Phoenix...$(NC)"
 	@nohup mix phx.server > phoenix.log 2>&1 & echo $$! > phoenix.pid
 	@sleep 3
 	@echo ""
-	@echo "$(GREEN)🎉 TalkRooms запущен!$(NC)"
+	@echo "$(GREEN)Phoenix запущен!$(NC)"
 	@echo "$(YELLOW)Приложение:$(NC) http://localhost:4000"
 	@echo "$(YELLOW)API:$(NC)        http://localhost:4000/api/health"
 
 stop: ## Остановить приложение
 	@echo "$(RED)🛑 Остановка TalkRooms...$(NC)"
-	@echo "$(YELLOW)Остановка Phoenix сервера...$(NC)"
+	@echo "$(YELLOW)Phoenix...$(NC)"
 	@if [ -f phoenix.pid ]; then \
 		kill `cat phoenix.pid` 2>/dev/null || echo "Phoenix процесс по PID файлу уже остановлен"; \
 		rm -f phoenix.pid; \
@@ -55,18 +41,10 @@ stop: ## Остановить приложение
 			kill $$PHOENIX_PID 2>/dev/null && echo "Phoenix процесс (PID: $$PHOENIX_PID) остановлен" || echo "Не удалось остановить Phoenix процесс"; \
 		fi; \
 	fi
-	@echo "$(YELLOW)Остановка PostgreSQL...$(NC)"
-	@docker stop rooms_postgres 2>/dev/null || echo "PostgreSQL контейнер уже остановлен"
-	@docker rm rooms_postgres 2>/dev/null || echo "PostgreSQL контейнер уже удален"
 	@echo "$(GREEN)✅ Приложение остановлено!$(NC)"
 
 status: ## Проверить статус сервисов
-	@echo "$(GREEN)📊 Статус TalkRooms$(NC)"
-	@echo ""
-	@echo "$(YELLOW)PostgreSQL:$(NC)"
-	@docker ps --filter "name=rooms_postgres" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" 2>/dev/null || echo "  ❌ Не запущен"
-	@echo ""
-	@echo "$(YELLOW)Phoenix приложение:$(NC)"
+	@echo "$(YELLOW)Phoenix:$(NC)"
 	@PHOENIX_PID=$$(lsof -i :4000 2>/dev/null | grep beam.smp | grep LISTEN | awk '{print $$2}' | head -1); \
 	if [ -n "$$PHOENIX_PID" ]; then \
 		echo "  ✅ Запущено (PID: $$PHOENIX_PID)"; \
@@ -77,16 +55,13 @@ status: ## Проверить статус сервисов
 	fi
 
 logs: ## Показать логи приложения
-	@echo "$(GREEN)📜 Логи TalkRooms$(NC)"
-	@echo ""
-	@echo "$(YELLOW)=== Phoenix логи ====$(NC)"
+	@echo "$(YELLOW)=== Phoenix ====$(NC)"
 	@if [ -f phoenix.log ]; then tail -20 phoenix.log; else echo "Логи Phoenix не найдены"; fi
 	@echo ""
 	@echo "$(YELLOW)=== PostgreSQL логи ====$(NC)"
 	@docker logs --tail 10 rooms_postgres 2>/dev/null || echo "PostgreSQL логи недоступны"
 
 test: ## Запустить тесты
-	@echo "$(GREEN)🧪 Запуск тестов TalkRooms...$(NC)"
 	@mix test
 
 clean: stop ## Полная очистка (остановка + удаление логов и PID файлов)

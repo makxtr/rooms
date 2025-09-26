@@ -1,61 +1,101 @@
 defmodule Chats.Room do
-  use Ecto.Schema
-  import Ecto.Changeset
+  @moduledoc """
+  Manages rooms using ETS - simple approach like OnlineUsers
+  """
+  @table_name :rooms
 
-  @primary_key {:id, :id, autogenerate: true}
-  @derive {Phoenix.Param, key: :hash}
-
-  schema "rooms" do
-    field :hash, :string
-    field :topic, :string
-    field :level, :integer, default: 0        # 0=открытая, 20=приватная
-    field :searchable, :boolean, default: true
-    field :watched, :boolean, default: false
-    field :creator_session_id, :string
-
-    timestamps(type: :utc_datetime)
-  end
-
-  @doc false
-  def changeset(room, attrs) do
-    room
-    |> cast(attrs, [:hash, :topic, :level, :searchable, :watched, :creator_session_id])
-    |> validate_required([:hash, :topic])
-    |> validate_length(:hash, min: 3, max: 50)
-    |> validate_length(:topic, min: 1, max: 200)
-    |> validate_inclusion(:level, [0, 20])
-    |> validate_format(:hash, ~r/^[a-zA-Z0-9_\-+]+$/,
-        message: "должен содержать только буквы, цифры, _, -, +")
-    |> unique_constraint(:hash)
+  def init do
+    :ets.new(@table_name, [:set, :public, :named_table])
   end
 
   @doc """
-  Changeset for creating a new room
+  Создать новую комнату
+  Key: hash
+  Value: %{hash, topic, level, searchable, watched, creator_session_id, created_at}
   """
-  def create_changeset(attrs) do
-    # Generate defaults first
+  def create_room(attrs \\ %{}) do
     hash = attrs["hash"] || generate_hash()
     topic = attrs["topic"] || "##{hash}"
 
-    # Merge defaults into attrs
-    attrs_with_defaults = Map.merge(attrs, %{"hash" => hash, "topic" => topic})
+    room = %{
+      id: generate_id_from_hash(hash),
+      hash: hash,
+      topic: topic,
+      level: attrs["level"] || 0,           # 0=открытая, 20=приватная
+      searchable: Map.get(attrs, "searchable", true),
+      watched: Map.get(attrs, "watched", false),
+      creator_session_id: attrs["creator_session_id"],
+      created_at: DateTime.utc_now()
+    }
 
-    %__MODULE__{}
-    |> changeset(attrs_with_defaults)
+    :ets.insert(@table_name, {hash, room})
+    {:ok, room}
   end
 
   @doc """
-  Changeset for updating room
+  Получить комнату по hash
   """
-  def update_changeset(room, attrs) do
-    room
-    |> cast(attrs, [:topic, :level, :searchable, :watched])
-    |> validate_required([:topic])
-    |> validate_length(:topic, min: 1, max: 200)
-    |> validate_inclusion(:level, [0, 20])
+  def get_room_by_hash(hash) do
+    case :ets.lookup(@table_name, hash) do
+      [{^hash, room}] -> room
+      [] -> nil
+    end
   end
 
-  defp generate_hash do
+
+  @doc """
+  Обновить комнату
+  """
+  def update_room(hash, attrs) do
+    case get_room_by_hash(hash) do
+      nil ->
+        {:error, :not_found}
+      room_data ->
+        updated_room = %{room_data |
+          topic: attrs["topic"] || room_data.topic,
+          level: attrs["level"] || room_data.level,
+          searchable: Map.get(attrs, "searchable", room_data.searchable),
+          watched: Map.get(attrs, "watched",room_data.watched)
+        }
+
+        :ets.insert(@table_name, {hash, updated_room})
+        {:ok, updated_room}
+    end
+  end
+
+  @doc """
+  Список всех комнат
+  """
+  def list_all_rooms do
+    @table_name
+    |> :ets.tab2list()
+    |> Enum.map(fn {_hash, room} -> room end)
+  end
+
+  @doc """
+  Форматировать комнату для API ответа
+  """
+  def format_room_response(room) do
+    %{
+      room_id: room.id,
+      hash: room.hash,
+      topic: room.topic,
+      level: room.level,
+      searchable: room.searchable,
+      watched: room.watched
+    }
+  end
+
+  @doc """
+  Генерировать случайный hash
+  """
+  def generate_hash do
     :crypto.strong_rand_bytes(8) |> Base.url_encode64(padding: false)
+  end
+
+  # Генерировать ID из hash для совместимости с фронтом
+  defp generate_id_from_hash(hash) do
+    # Создаем консистентный integer ID из hash для фронта
+    :erlang.phash2(hash, 1_000_000)
   end
 end

@@ -1,5 +1,5 @@
   {
-      "elixirLS.projectDir": "./back/",
+      "elixirLS.projectDir": "./",
       "makefile.configureOnOpen": false
   }
 

@@ -1,5 +1,6 @@
 defmodule ChatsWeb.RoomControllerTest do
   use ChatsWeb.ConnCase
+  use Chats.EtsCase
 
   alias Chats.RoomContext
 
@@ -72,26 +73,6 @@ defmodule ChatsWeb.RoomControllerTest do
       assert %{"hash" => hash} = response
       assert is_binary(hash)
       assert String.length(hash) > 0
-    end
-
-    test "returns errors with invalid data", %{conn: conn} do
-      room_params = %{"hash" => ""}  # empty hash
-
-      conn = post(conn, ~p"/api/rooms", room_params)
-
-      assert json_response(conn, 422)["errors"] != %{}
-    end
-
-    test "returns error when hash already exists", %{conn: conn} do
-      existing_room = room_fixture()
-      room_params = %{
-        "hash" => existing_room.hash,
-        "topic" => "Duplicate room"
-      }
-
-      conn = post(conn, ~p"/api/rooms", room_params)
-
-      assert json_response(conn, 422)["errors"]["hash"] != nil
     end
   end
 

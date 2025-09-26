@@ -7,9 +7,12 @@ defmodule Chats.Application do
 
   @impl true
   def start(_type, _args) do
+    # Инициализируем ETS таблицы
+    Chats.Room.init()
+    Chats.OnlineUsers.init()
+
     children = [
       ChatsWeb.Telemetry,
-      Chats.Repo,
       {DNSCluster, query: Application.get_env(:chats, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Chats.PubSub},
       # Start a worker by calling: Rooms.Worker.start_link(arg)

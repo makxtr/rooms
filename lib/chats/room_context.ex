@@ -1,26 +1,22 @@
 defmodule Chats.RoomContext do
   @moduledoc """
-  Context for room management operations
+  Context for room management operations using ETS
   """
 
-  import Ecto.Query, warn: false
-  alias Chats.Repo
   alias Chats.Room
 
   @doc """
   Gets a room by hash
   """
   def get_room_by_hash(hash) when is_binary(hash) do
-    Room
-    |> where([r], r.hash == ^hash)
-    |> Repo.one()
+    Room.get_room_by_hash(hash)
   end
 
   @doc """
   Gets a room by hash, returns error tuple if not found
   """
   def fetch_room_by_hash(hash) do
-    case get_room_by_hash(hash) do
+    case Room.get_room_by_hash(hash) do
       nil -> {:error, :not_found}
       room -> {:ok, room}
     end
@@ -30,9 +26,7 @@ defmodule Chats.RoomContext do
   Creates a new room
   """
   def create_room(attrs \\ %{}) do
-    attrs
-    |> Room.create_changeset()
-    |> Repo.insert()
+    Room.create_room(attrs)
   end
 
   @doc """
@@ -40,71 +34,64 @@ defmodule Chats.RoomContext do
   """
   def create_room_with_hash(hash, attrs \\ %{}) do
     room_attrs = Map.merge(attrs, %{"hash" => hash})
-    create_room(room_attrs)
-  end
-
-  @doc """
-  Updates a room
-  """
-  def update_room(%Room{} = room, attrs) do
-    room
-    |> Room.update_changeset(attrs)
-    |> Repo.update()
+    Room.create_room(room_attrs)
   end
 
   @doc """
   Finds or creates a room by hash
   """
   def find_or_create_room(hash, attrs \\ %{}) do
-    case get_room_by_hash(hash) do
+    case Room.get_room_by_hash(hash) do
       nil ->
-        create_room_with_hash(hash, attrs)
-      room ->
-        {:ok, room}
+        room_attrs = Map.merge(attrs, %{"hash" => hash})
+        Room.create_room(room_attrs)
+      room_data ->
+        {:ok, room_data}
     end
+  end
+
+  @doc """
+  Lists all rooms
+  """
+  def list_all_rooms do
+    Room.list_all_rooms()
+  end
+
+  @doc """
+  Updates a room
+  """
+  def update_room(room_data, attrs) do
+    Room.update_room(room_data.hash, attrs)
   end
 
   @doc """
   Gets a random searchable room
   """
   def get_random_room do
-    Room
-    |> where([r], r.searchable == true and r.level == 0)
-    |> order_by(fragment("RANDOM()"))
-    |> limit(1)
-    |> Repo.one()
-  end
+    searchable_rooms =
+      Room.list_all_rooms()
+      |> Enum.filter(& &1.searchable)
 
-  @doc """
-  Lists all searchable public rooms
-  """
-  def list_searchable_rooms do
-    Room
-    |> where([r], r.searchable == true and r.level == 0)
-    |> order_by([r], desc: r.inserted_at)
-    |> Repo.all()
+    case searchable_rooms do
+      [] -> nil
+      rooms -> Enum.random(rooms)
+    end
   end
 
   @doc """
   Checks if room exists by hash
   """
   def room_exists?(hash) do
-    Room
-    |> where([r], r.hash == ^hash)
-    |> Repo.exists?()
+    case Room.get_room_by_hash(hash) do
+      nil -> false
+      _ -> true
+    end
   end
 
   @doc """
   Formats room data for API response
   """
-  def format_room_response(%Room{} = room) do
-    %{
-      room_id: room.id,
-      hash: room.hash,
-      topic: room.topic,
-      level: room.level,
-      searchable: room.searchable,
-      watched: room.watched
-    }
+  def format_room_response(room_data) do
+    Room.format_room_response(room_data)
   end
 end
