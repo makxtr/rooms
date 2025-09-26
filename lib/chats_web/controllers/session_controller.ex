@@ -11,7 +11,9 @@ defmodule ChatsWeb.SessionController do
 
   def update(conn, params) do
     {conn, current_session} = SessionService.get_or_create_session(conn)
-    {updated_conn, _updated_session} = SessionService.update_session(conn, current_session, params)
+
+    {updated_conn, _updated_session} =
+      SessionService.update_session(conn, current_session, params)
 
     json(updated_conn, %{status: "ok", updated: params})
   end

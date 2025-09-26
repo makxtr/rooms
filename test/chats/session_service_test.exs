@@ -84,7 +84,8 @@ defmodule Chats.SessionServiceTest do
       updated_session = SessionService.update_session_fields(session, params)
 
       assert updated_session.nickname == "NewName"
-      assert updated_session.session_id == "test_id"  # unchanged
+      # unchanged
+      assert updated_session.session_id == "test_id"
     end
 
     test "ignores nil values", %{session: session} do
@@ -95,7 +96,8 @@ defmodule Chats.SessionServiceTest do
 
       updated_session = SessionService.update_session_fields(session, params)
 
-      assert updated_session.nickname == "OldName"  # unchanged
+      # unchanged
+      assert updated_session.nickname == "OldName"
       assert updated_session.ignores == [%{"user1" => true}, %{}]
     end
   end

@@ -4,8 +4,8 @@ defmodule ChatsWeb.SocketController do
   def create(conn, _params) do
     # Заглушка для создания WebSocket соединения
     socket_data = %{
-      socket_id: "socket_" <> :crypto.strong_rand_bytes(8) |> Base.encode16(case: :lower),
-      token: "token_" <> :crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower),
+      socket_id: ("socket_" <> :crypto.strong_rand_bytes(8)) |> Base.encode16(case: :lower),
+      token: ("token_" <> :crypto.strong_rand_bytes(16)) |> Base.encode16(case: :lower),
       status: "created"
     }
 

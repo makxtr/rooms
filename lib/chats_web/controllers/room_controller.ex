@@ -32,6 +32,7 @@ defmodule ChatsWeb.RoomController do
     params_with_creator = Map.put(params, "creator_session_id", creator_session_id)
 
     {:ok, room} = RoomContext.create_room(params_with_creator)
+
     conn
     |> put_status(:created)
     |> json(RoomContext.format_room_response(room))
@@ -59,7 +60,8 @@ defmodule ChatsWeb.RoomController do
     # Создатель комнаты получает level 80 и права админа
     is_creator = room.creator_session_id == current_session_id
     level = if is_creator, do: 80, else: 0
-    is_admin = level >= 70  # Админ (70) или создатель (80)
+    # Админ (70) или создатель (80)
+    is_admin = level >= 70
 
     json(conn, %{
       room: RoomContext.format_room_response(room),
@@ -105,5 +107,4 @@ defmodule ChatsWeb.RoomController do
         json(conn, RoomContext.format_room_response(room))
     end
   end
-
 end

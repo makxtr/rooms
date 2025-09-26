@@ -39,7 +39,8 @@ defmodule Chats.SessionService do
       provider_id: nil,
       rand_nickname: true,
       nickname: generate_random_nickname(),
-      ignores: [%{}, %{}], # [user_ignores, session_ignores]
+      # [user_ignores, session_ignores]
+      ignores: [%{}, %{}],
       subscriptions: [],
       rooms: [],
       recent_rooms: [],

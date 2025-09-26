@@ -51,9 +51,9 @@ defmodule ChatsWeb.SessionControllerTest do
       conn = patch(conn, ~p"/api/sessions/me", update_params)
 
       assert json_response(conn, 200) == %{
-        "status" => "ok",
-        "updated" => update_params
-      }
+               "status" => "ok",
+               "updated" => update_params
+             }
 
       # Verify session was actually updated
       conn = get(conn, ~p"/api/sessions/me")

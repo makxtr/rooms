@@ -55,8 +55,10 @@ defmodule Chats.RoomContextTest do
       assert {:ok, room} = RoomContext.create_room(attrs)
       assert room.hash == "valid-room"
       assert room.topic == "Valid Room Topic"
-      assert room.level == 0  # default
-      assert room.searchable == true  # default
+      # default
+      assert room.level == 0
+      # default
+      assert room.searchable == true
     end
 
     test "generates hash when not provided" do

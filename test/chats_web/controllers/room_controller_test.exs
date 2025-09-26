@@ -25,23 +25,23 @@ defmodule ChatsWeb.RoomControllerTest do
       conn = get(conn, ~p"/api/rooms/#{room.hash}")
 
       assert json_response(conn, 200) == %{
-        "room" => %{
-          "room_id" => room.id,
-          "hash" => room.hash,
-          "topic" => room.topic,
-          "level" => room.level,
-          "searchable" => room.searchable,
-          "watched" => room.watched
-        }
-      }
+               "room" => %{
+                 "room_id" => room.id,
+                 "hash" => room.hash,
+                 "topic" => room.topic,
+                 "level" => room.level,
+                 "searchable" => room.searchable,
+                 "watched" => room.watched
+               }
+             }
     end
 
     test "returns 404 when room doesn't exist", %{conn: conn} do
       conn = get(conn, ~p"/api/rooms/nonexistent")
 
       assert json_response(conn, 404) == %{
-        "error" => "Room not found"
-      }
+               "error" => "Room not found"
+             }
     end
   end
 
@@ -56,12 +56,12 @@ defmodule ChatsWeb.RoomControllerTest do
       response = json_response(conn, 201)
 
       assert %{
-        "hash" => "new-room",
-        "topic" => "New Room Topic",
-        "level" => 0,
-        "searchable" => true,
-        "watched" => false
-      } = response
+               "hash" => "new-room",
+               "topic" => "New Room Topic",
+               "level" => 0,
+               "searchable" => true,
+               "watched" => false
+             } = response
     end
 
     test "generates hash when not provided", %{conn: conn} do
@@ -88,17 +88,17 @@ defmodule ChatsWeb.RoomControllerTest do
       hash = room.hash
 
       assert %{
-        "room" => %{
-          "room_id" => ^room_id,
-          "hash" => ^hash
-        },
-        "subscription" => %{"subscription_id" => _},
-        "role" => %{
-          "role_id" => _,
-          "nickname" => _
-        },
-        "roles_online" => []
-      } = response
+               "room" => %{
+                 "room_id" => ^room_id,
+                 "hash" => ^hash
+               },
+               "subscription" => %{"subscription_id" => _},
+               "role" => %{
+                 "role_id" => _,
+                 "nickname" => _
+               },
+               "roles_online" => []
+             } = response
     end
 
     test "creates and enters new room", %{conn: conn} do
@@ -109,10 +109,10 @@ defmodule ChatsWeb.RoomControllerTest do
       response = json_response(conn, 200)
 
       assert %{
-        "room" => %{
-          "hash" => ^hash
-        }
-      } = response
+               "room" => %{
+                 "hash" => ^hash
+               }
+             } = response
 
       # Verify room was created
       assert RoomContext.room_exists?(hash)
@@ -130,9 +130,9 @@ defmodule ChatsWeb.RoomControllerTest do
       hash = room.hash
 
       assert %{
-        "room_id" => ^room_id,
-        "hash" => ^hash
-      } = response
+               "room_id" => ^room_id,
+               "hash" => ^hash
+             } = response
     end
 
     test "creates general room when no searchable rooms exist", %{conn: conn} do
@@ -143,9 +143,9 @@ defmodule ChatsWeb.RoomControllerTest do
       response = json_response(conn, 200)
 
       assert %{
-        "hash" => "general",
-        "topic" => "Общий чат"
-      } = response
+               "hash" => "general",
+               "topic" => "Общий чат"
+             } = response
     end
   end
 end
