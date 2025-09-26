@@ -26,8 +26,7 @@ config :chats, ChatsWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "MWBAf/WdCAuzYzT7+e+CbVNEialfvifP7xPdEtBSHW5Ya0f33FvvGqt5jLOAHalR",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:chats, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:chats, ~w(--watch)]}
+    esbuild: {Esbuild, :install_and_run, [:chats, ~w(--sourcemap=inline --watch)]}
   ]
 
 # ## SSL Support

@@ -35,3 +35,6 @@ rooms-*.tar
 npm-debug.log
 /assets/node_modules/
 
+/phoenix.log
+/phoenix.pid
+
