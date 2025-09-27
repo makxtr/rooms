@@ -62,8 +62,8 @@ defmodule Chats.RoomContext do
         room_attrs = Map.merge(attrs, %{"hash" => hash})
         create_room(room_attrs)
 
-      room_data ->
-        {:ok, room_data}
+      room ->
+        {:ok, room}
     end
   end
 
@@ -77,18 +77,18 @@ defmodule Chats.RoomContext do
   @doc """
   Updates a room
   """
-  def update_room(room_data, attrs) do
-    case Room.get_by_hash(room_data.hash) do
+  def update_room(room, attrs) do
+    case Room.get_by_hash(room.hash) do
       nil ->
         {:error, :not_found}
 
-      room_data ->
+      room ->
         updated_room = %{
-          room_data
-          | topic: attrs["topic"] || room_data.topic,
-            level: attrs["level"] || room_data.level,
-            searchable: Map.get(attrs, "searchable", room_data.searchable),
-            watched: Map.get(attrs, "watched", room_data.watched)
+          room
+          | topic: attrs["topic"] || room.topic,
+            level: attrs["level"] || room.level,
+            searchable: Map.get(attrs, "searchable", room.searchable),
+            watched: Map.get(attrs, "watched", room.watched)
         }
 
         Room.insert(updated_room)

@@ -1,11 +1,11 @@
-defmodule Chats.SessionServiceTest do
+defmodule Chats.SessionContextTest do
   use ExUnit.Case, async: true
-  alias Chats.SessionService
+  alias Chats.SessionContext
   alias Chats.Utils
 
   describe "create_initial_session/0" do
     test "creates session with required fields" do
-      session = SessionService.create_initial_session()
+      session = SessionContext.init()
 
       assert is_binary(session.session_id)
       assert session.user_id == nil
@@ -20,8 +20,8 @@ defmodule Chats.SessionServiceTest do
     end
 
     test "generates unique session IDs" do
-      session1 = SessionService.create_initial_session()
-      session2 = SessionService.create_initial_session()
+      session1 = SessionContext.init()
+      session2 = SessionContext.init()
 
       assert session1.session_id != session2.session_id
     end
@@ -68,7 +68,7 @@ defmodule Chats.SessionServiceTest do
         "subscriptions" => ["room1"]
       }
 
-      updated_session = SessionService.update_session_fields(session, params)
+      updated_session = SessionContext.update_fields(session, params)
 
       assert updated_session.nickname == "NewName"
       assert updated_session.ignores == [%{"user1" => true}, %{}]
@@ -82,7 +82,7 @@ defmodule Chats.SessionServiceTest do
         "user_id" => "hacker_user"
       }
 
-      updated_session = SessionService.update_session_fields(session, params)
+      updated_session = SessionContext.update_fields(session, params)
 
       assert updated_session.nickname == "NewName"
       # unchanged
@@ -95,7 +95,7 @@ defmodule Chats.SessionServiceTest do
         "ignores" => [%{"user1" => true}, %{}]
       }
 
-      updated_session = SessionService.update_session_fields(session, params)
+      updated_session = SessionContext.update_fields(session, params)
 
       # unchanged
       assert updated_session.nickname == "OldName"

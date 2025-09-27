@@ -9,7 +9,7 @@ defmodule Chats.Room do
   end
 
   @doc """
-  Создать новую комнату
+  Добавить/Обновить новую комнату
   Key: hash
   Value: %{hash, topic, level, searchable, watched, creator_session_id, created_at}
   """
