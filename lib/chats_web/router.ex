@@ -31,10 +31,6 @@ defmodule ChatsWeb.Router do
     get "/sessions/me", SessionController, :me
     patch "/sessions/me", SessionController, :update
 
-    # Sockets
-    post "/sockets", SocketController, :create
-    get "/sockets/:socket_id", SocketController, :show
-
     # Rooms
     get "/rooms/:hash", RoomController, :show
     post "/rooms", RoomController, :create

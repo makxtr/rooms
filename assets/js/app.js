@@ -34,6 +34,7 @@ function initializeApp() {
         .then(() => import("./views/moderate.js"))
         .then(() => import("./views/admin.js"))
         .then(() => import("./views/ranks.js"))
+        .then(() => import("./user_socket.js"))
         .then(() => {
             // Initialize FastClick when everything is loaded
             if (typeof FastClick !== 'undefined') {

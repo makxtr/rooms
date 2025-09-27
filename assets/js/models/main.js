@@ -188,9 +188,11 @@ Me.isHidden = function(data) {
 
     function reconnect() {
         clearTimeout(connectionTimer);
-        Rest.sockets.get(Socket.id)
-            .then(openSocket)
-            .catch(socketLost);
+        // Rest.sockets.get(Socket.id)
+        //     .then(openSocket)
+        //     .catch(socketLost);
+        // Заглушка вместо REST API вызова
+        openSocket();
     }
 
     function socketLost(xhr) {
@@ -237,8 +239,10 @@ Me.isHidden = function(data) {
     }
 
     Socket.create = function() {
-        return Rest.sockets.create()
-            .then(socketCreated);
+        // return Rest.sockets.create()
+        //     .then(socketCreated);
+        // Заглушка вместо REST API вызова
+        return Promise.resolve();
     };
 
     $window.on('beforeunload', disconnect);
