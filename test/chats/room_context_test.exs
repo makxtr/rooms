@@ -79,6 +79,21 @@ defmodule Chats.RoomContextTest do
     end
   end
 
+  describe "update_room/2" do
+    test "update topic ok" do
+      room = room_fixture()
+      found_room = RoomContext.get_room_by_hash(room.hash)
+
+      assert found_room.topic == "Test Room Topic"
+
+      RoomContext.update_room(found_room, %{"topic" => "New topic name"})
+
+      updated_room = RoomContext.get_room_by_hash(found_room.hash)
+
+      assert updated_room.topic == "New topic name"
+    end
+  end
+
   describe "find_or_create_room/2" do
     test "returns existing room when found" do
       existing_room = room_fixture()

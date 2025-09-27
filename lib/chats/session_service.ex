@@ -3,6 +3,8 @@ defmodule Chats.SessionService do
   Business logic for session management
   """
 
+  alias Chats.Utils
+
   @doc """
   Gets existing session from conn or creates a new one
   """
@@ -31,14 +33,12 @@ defmodule Chats.SessionService do
   Creates initial session with default values
   """
   def create_initial_session do
-    session_id = generate_session_id()
-
     %{
-      session_id: session_id,
+      session_id: Utils.gen_session_hash(),
       user_id: nil,
       provider_id: nil,
       rand_nickname: true,
-      nickname: generate_random_nickname(),
+      nickname: Utils.gen_random_nickname(),
       # [user_ignores, session_ignores]
       ignores: [%{}, %{}],
       subscriptions: [],
@@ -60,26 +60,5 @@ defmodule Chats.SessionService do
         value -> Map.put(acc, String.to_atom(field), value)
       end
     end)
-  end
-
-  @doc """
-  Generates secure session ID
-  """
-  def generate_session_id do
-    :crypto.strong_rand_bytes(16) |> Base.url_encode64(padding: false)
-  end
-
-  @doc """
-  Generates random nickname for anonymous users
-  """
-  def generate_random_nickname do
-    adjectives = ["Быстрый", "Умный", "Добрый", "Смелый", "Веселый", "Тихий", "Яркий"]
-    nouns = ["Кот", "Лис", "Волк", "Медведь", "Заяц", "Еж", "Белка"]
-
-    adjective = Enum.random(adjectives)
-    noun = Enum.random(nouns)
-    number = :rand.uniform(999)
-
-    "#{adjective}#{noun}#{number}"
   end
 end

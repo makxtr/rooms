@@ -27,11 +27,11 @@ defmodule Chats.RoomContext do
   Creates a new room
   """
   def create_room(attrs \\ %{}) do
-    hash = attrs["hash"] || Utils.generate_hash()
+    hash = attrs["hash"] || Utils.gen_room_hash()
     topic = attrs["topic"] || "##{hash}"
 
     room = %{
-      id: Utils.generate_id_from_hash(hash),
+      id: Utils.gen_id_from_hash(hash),
       hash: hash,
       topic: topic,
       # 0=открытая, 20=приватная

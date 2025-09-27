@@ -1,6 +1,7 @@
 defmodule Chats.SessionServiceTest do
   use ExUnit.Case, async: true
   alias Chats.SessionService
+  alias Chats.Utils
 
   describe "create_initial_session/0" do
     test "creates session with required fields" do
@@ -28,7 +29,7 @@ defmodule Chats.SessionServiceTest do
 
   describe "generate_session_id/0" do
     test "generates base64 encoded string" do
-      session_id = SessionService.generate_session_id()
+      session_id = Utils.gen_session_hash()
 
       assert is_binary(session_id)
       assert String.length(session_id) > 0
@@ -39,7 +40,7 @@ defmodule Chats.SessionServiceTest do
 
   describe "generate_random_nickname/0" do
     test "generates nickname with adjective, noun and number" do
-      nickname = SessionService.generate_random_nickname()
+      nickname = Utils.gen_random_nickname()
 
       assert is_binary(nickname)
       assert String.length(nickname) > 0
