@@ -8,10 +8,10 @@ defmodule Chats.SessionContext do
   Gets existing session from conn or creates a new one
   """
   def get_or_create(conn) do
-    case Plug.Conn.get_session(conn, "session_data") do
+    case Plug.Conn.get_session(conn, :session_data) do
       nil ->
         session_data = init()
-        conn = Plug.Conn.put_session(conn, "session_data", session_data)
+        conn = Plug.Conn.put_session(conn, :session_data, session_data)
         {conn, session_data}
 
       existing_session ->
@@ -28,7 +28,7 @@ defmodule Chats.SessionContext do
   """
   def update(conn, current_session, params) do
     updated_session = update_fields(current_session, params)
-    conn = Plug.Conn.put_session(conn, "session_data", updated_session)
+    conn = Plug.Conn.put_session(conn, :session_data, updated_session)
     {conn, updated_session}
   end
 
@@ -36,13 +36,18 @@ defmodule Chats.SessionContext do
   Updates only allowed session fields
   """
   def update_fields(session, params) do
-    allowed_fields = ["nickname", "ignores", "subscriptions"]
+    allowed_fields = [:nickname, :ignores, :subscriptions]
 
     Enum.reduce(allowed_fields, session, fn field, acc ->
-      case Map.get(params, field) do
+      case Map.get(params, Atom.to_string(field)) do
         nil -> acc
-        value -> Map.put(acc, String.to_atom(field), value)
+        value -> Map.put(acc, field, value)
       end
     end)
+  end
+
+  def get_creator_session_id(conn) do
+    session_data = Plug.Conn.get_session(conn, :session_data)
+    if session_data, do: session_data[:session_id], else: nil
   end
 end

@@ -2,6 +2,7 @@ defmodule ChatsWeb.RoomController do
   use ChatsWeb, :controller
 
   alias Chats.RoomContext
+  alias Chats.SessionContext
 
   @doc """
   GET /api/rooms/:hash - получить данные комнаты
@@ -28,7 +29,7 @@ defmodule ChatsWeb.RoomController do
       Map.put(
         params,
         "creator_session_id",
-        get_creator_session_id(conn)
+        SessionContext.get_creator_session_id(conn)
       )
 
     {:ok, room} = RoomContext.create_room(params_with_creator)
@@ -44,12 +45,12 @@ defmodule ChatsWeb.RoomController do
   """
   def enter(conn, %{"hash" => hash} = params) do
     socket_id = Map.get(params, "socket_id")
-    attrs = %{"creator_session_id" => get_creator_session_id(conn)}
+    attrs = %{"creator_session_id" => SessionContext.get_creator_session_id(conn)}
 
     {:ok, room} = RoomContext.find_or_create_room(hash, attrs)
 
     # Определяем права пользователя
-    session_data = get_session(conn, "session_data")
+    session_data = get_session(conn, :session_data)
     current_session_id = if session_data, do: session_data[:session_id], else: nil
     nickname = if session_data, do: session_data[:nickname], else: "Anonymous"
 
@@ -102,10 +103,5 @@ defmodule ChatsWeb.RoomController do
       room ->
         json(conn, RoomContext.format_room_response(room))
     end
-  end
-
-  defp get_creator_session_id(conn) do
-    session_data = get_session(conn, "session_data")
-    if session_data, do: session_data[:session_id], else: nil
   end
 end
