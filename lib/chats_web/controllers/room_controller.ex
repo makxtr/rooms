@@ -24,12 +24,12 @@ defmodule ChatsWeb.RoomController do
   POST /api/rooms - создать новую комнату
   """
   def create(conn, params) do
-    # Получаем session_id из текущей сессии
-    session_data = get_session(conn, "session_data")
-    creator_session_id = if session_data, do: session_data[:session_id], else: nil
-
-    # Добавляем creator_session_id в параметры
-    params_with_creator = Map.put(params, "creator_session_id", creator_session_id)
+    params_with_creator =
+      Map.put(
+        params,
+        "creator_session_id",
+        get_creator_session_id(conn)
+      )
 
     {:ok, room} = RoomContext.create_room(params_with_creator)
 
@@ -44,11 +44,7 @@ defmodule ChatsWeb.RoomController do
   """
   def enter(conn, %{"hash" => hash} = params) do
     socket_id = Map.get(params, "socket_id")
-
-    # Получаем session_id для случая создания новой комнаты
-    session_data = get_session(conn, "session_data")
-    creator_session_id = if session_data, do: session_data[:session_id], else: nil
-    attrs = %{"creator_session_id" => creator_session_id}
+    attrs = %{"creator_session_id" => get_creator_session_id(conn)}
 
     {:ok, room} = RoomContext.find_or_create_room(hash, attrs)
 
@@ -106,5 +102,10 @@ defmodule ChatsWeb.RoomController do
       room ->
         json(conn, RoomContext.format_room_response(room))
     end
+  end
+
+  defp get_creator_session_id(conn) do
+    session_data = get_session(conn, "session_data")
+    if session_data, do: session_data[:session_id], else: nil
   end
 end
