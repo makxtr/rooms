@@ -69,19 +69,8 @@ clean: stop ## Полная очистка (остановка + удалени�
 	@rm -f phoenix.pid phoenix.log
 	@echo "$(GREEN)✅ Очистка завершена!$(NC)"
 
-dev: ## Запустить приложение в режиме разработки
-	@echo "$(GREEN)🔧 Запуск TalkRooms для разработки...$(NC)"
-	@docker run -d --name rooms_postgres \
-		-e POSTGRES_USER=postgres \
-		-e POSTGRES_PASSWORD=postgres \
-		-e POSTGRES_DB=rooms_dev \
-		-p 5434:5432 \
-		postgres:15 || echo "PostgreSQL уже запущен"
-	@sleep 5
-	@mix ecto.create --quiet || echo "База данных уже существует"
-	@mix ecto.migrate --quiet || echo "Миграции уже выполнены"
-	@echo "$(YELLOW)Запуск Phoenix в интерактивном режиме...$(NC)"
-	@mix phx.server
+debug: ## Запустить приложение в дебаг режиме с IEx консолью
+	@iex -S mix phx.server
 
 restart: stop start ## Перезапустить приложение
 
