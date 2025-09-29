@@ -1,142 +1,145 @@
 /* Human date and time */
-(function() {
-
+(function () {
     var day = 24 * 60 * 60 * 1000;
-    var months = ' января, февраля, марта, апреля, мая, июня, июля, августа, сентября, октября, ноября, декабря'.split(',');
-    var recent = ['Сегодня', 'Вчера', 'Позавчера'];
+    var months =
+        " января, февраля, марта, апреля, мая, июня, июля, августа, сентября, октября, ноября, декабря".split(
+            ",",
+        );
+    var recent = ["Сегодня", "Вчера", "Позавчера"];
     var tonight = 0;
-    var currentYear = (new Date).getFullYear();
+    var currentYear = new Date().getFullYear();
     var timer;
 
-    Date.prototype.toHumanTime = function() {
+    Date.prototype.toHumanTime = function () {
         var m = this.getMinutes();
-        return this.getHours() + (m < 10 ? ':0' : ':') + m;
+        return this.getHours() + (m < 10 ? ":0" : ":") + m;
     };
 
-    Date.prototype.toHumanDate = function() {
+    Date.prototype.toHumanDate = function () {
         var year = this.getFullYear();
         var text = this.getDate() + months[this.getMonth()];
         if (year !== currentYear) {
-            text += ' ' + year;
+            text += " " + year;
         }
-        return text;;
+        return text;
     };
 
-    Date.prototype.toSmartDate = function() {
+    Date.prototype.toSmartDate = function () {
         return recent[this.daysAgo()] || this.toHumanDate();
     };
 
-    Date.prototype.daysAgo = function() {
+    Date.prototype.daysAgo = function () {
         return Math.floor((tonight - this.getTime()) / day);
     };
 
     function update() {
         var now = Date.now();
         if (now > tonight) {
-            currentYear = (new Date).getFullYear();
-            tonight = (new Date).setHours(24, 0, 0, 0) - 1;
-            $window.trigger('date.changed');
+            currentYear = new Date().getFullYear();
+            tonight = new Date().setHours(24, 0, 0, 0) - 1;
+            $window.trigger("date.changed");
         }
         clearTimeout(timer);
         timer = setTimeout(update, tonight - now + 1000);
     }
 
-    // Reset timer after sleep mode
-    Socket.on('connected', update);
-
     update();
-
 })();
 
 var Talk = {
-    content: $('.talk-content')
+    content: $(".talk-content"),
 };
 
-
 // Talk overlay
-(function() {
-
-    var overlay = $('.talk-overlay'),
+(function () {
+    var overlay = $(".talk-overlay"),
         sections = overlay.children();
 
     function showOverlay(section) {
         sections.hide();
         sections.filter(section).show();
         overlay.show();
-        Talk.content.removeClass('talk-loading');
+        Talk.content.removeClass("talk-loading");
     }
 
     function hideOverlay() {
         overlay.fadeOut(150);
     }
 
-    Rooms.on('explore', function() {
+    Rooms.on("explore", function () {
         overlay.hide(); // Show lists instantly
     });
 
-    Rooms.on('select', function(room) {
-        if (room.state !== 'ready') {
-            Talk.content.addClass('talk-loading');
+    Rooms.on("select", function (room) {
+        if (room.state !== "ready") {
+            Talk.content.addClass("talk-loading");
         }
     });
 
-    Rooms.on('selected.ready', hideOverlay);
+    Rooms.on("selected.ready", hideOverlay);
 
-    Rooms.on('selected.denied', function(room) {
-        if (room.state === 'locked') {
-            showOverlay(room.myRole.come_in != null ? '.entry-wait' : '.entry-login');
+    Rooms.on("selected.denied", function (room) {
+        if (room.state === "locked") {
+            showOverlay(
+                room.myRole.come_in != null ? ".entry-wait" : ".entry-login",
+            );
         } else {
-            showOverlay('.entry-' + room.state);
+            showOverlay(".entry-" + room.state);
         }
     });
 
-    Rooms.on('shuffle.failed', function() {
-        showOverlay('.search-failed');
+    Rooms.on("shuffle.failed", function () {
+        showOverlay(".search-failed");
     });
 
-    overlay.find('.entry-search').on('click', function() {
+    overlay.find(".entry-search").on("click", function () {
         Rooms.shuffle();
     });
 
-    overlay.find('.search-failed-hall .link').on('click', function() {
-        Rooms.trigger('explore');
+    overlay.find(".search-failed-hall .link").on("click", function () {
+        Rooms.trigger("explore");
     });
-
 })();
 
 // Format content
-Talk.format = function(content) {
+Talk.format = function (content) {
     var s = content;
-    if (~s.indexOf('*')) {
-        s = s.replace(/^\*\s*([^*]+)\s*\*$/, '<em>$1</em>');
-        s = s.replace(/(^|\W)\*([^\s*]|[^\s*].*?\S)\*/g, '$1<em>$2</em>');
+    if (~s.indexOf("*")) {
+        s = s.replace(/^\*\s*([^*]+)\s*\*$/, "<em>$1</em>");
+        s = s.replace(/(^|\W)\*([^\s*]|[^\s*].*?\S)\*/g, "$1<em>$2</em>");
     }
-    if (~s.indexOf('_')) {
-        s = s.replace(/(^|\s)_(\W|\W+\S)_/g, '$1<em>$2</em>');
+    if (~s.indexOf("_")) {
+        s = s.replace(/(^|\s)_(\W|\W+\S)_/g, "$1<em>$2</em>");
     }
-    if (~s.indexOf('http')) {
-        s = s.replace(/\bhttp\S+talkrooms.ru\/(#[\w\-+]+)\b/g, '$1')
-        s = s.replace(/\b(http\S+[^.,)?!\s])/g, '<a href="$1" target="_blank">$1</a>')
+    if (~s.indexOf("http")) {
+        s = s.replace(/\bhttp\S+talkrooms.ru\/(#[\w\-+]+)\b/g, "$1");
+        s = s.replace(
+            /\b(http\S+[^.,)?!\s])/g,
+            '<a href="$1" target="_blank">$1</a>',
+        );
     }
-    if (~s.indexOf('#')) {
+    if (~s.indexOf("#")) {
         s = s.replace(/(^|\s)(#[\w\-+]+)\b/g, '$1<a href="/$2">$2</a>');
     }
-    if (~s.indexOf('~~')) {
-        s = s.replace(/~~(.+?)~~/g, '<del>$1</del>');
+    if (~s.indexOf("~~")) {
+        s = s.replace(/~~(.+?)~~/g, "<del>$1</del>");
     }
-    return s.replace(/\n/g, '<br>');
+    return s.replace(/\n/g, "<br>");
 };
 
 // Dates
-(function() {
-
+(function () {
     var dates = [];
     var index = {};
 
     function Day(str) {
         this.date = new Date(str);
         this.title = this.date.toSmartDate();
-        this.node = $('<div class="date"><span class="date-text">' + this.title + '</span></div>')[0];
+        this.node = $(
+            '<div class="date"><span class="date-text">' +
+                this.title +
+                "</span></div>",
+        )[0];
     }
 
     function createDay(str) {
@@ -149,47 +152,46 @@ Talk.format = function(content) {
     function updateTitle(day) {
         var title = day.date.toSmartDate();
         if (title !== day.title) {
-            $(day.node).find('.date-text').text(title);
+            $(day.node).find(".date-text").text(title);
             day.title = title;
         }
     }
 
-    Talk.getDate = function(str) {
+    Talk.getDate = function (str) {
         return index[str] || createDay(str);
     };
 
     // Update dates after midnight
-    $window.on('date.changed', function() {
+    $window.on("date.changed", function () {
         dates.forEach(updateTitle);
         Talk.reflowDates();
     });
-
 })();
 
-
 // Messages
-(function() {
+(function () {
+    var renderSpeech = $.template("#speech-template"),
+        renderRecipient = $.template("#recipient-template"),
+        renderMessage = $.template("#message-template");
 
-    var renderSpeech = $.template('#speech-template'),
-        renderRecipient = $.template('#recipient-template'),
-        renderMessage = $.template('#message-template');
-
-    var edit = $('<span class="msg-edit" title="Редактировать сообщение"></span>')[0];
+    var edit = $(
+        '<span class="msg-edit" title="Редактировать сообщение"></span>',
+    )[0];
 
     function Message(data) {
         var created = new Date(data.created);
         var message = renderMessage({
             message_id: data.message_id,
             created: data.created,
-            content: Talk.format(data.content) || '…',
+            content: Talk.format(data.content) || "…",
             time: created.toHumanTime(),
         });
         if (data.isMy) {
             if (created.daysAgo() < 2) {
-                message.find('.msg-text').append(edit.cloneNode(true));
+                message.find(".msg-text").append(edit.cloneNode(true));
             }
         } else if (data.mentionsMe) {
-            message.addClass('with-my-name');
+            message.addClass("with-my-name");
         }
         this.timestamp = created.getTime();
         this.date = created.toDateString();
@@ -197,7 +199,7 @@ Talk.format = function(content) {
         this.data = data;
     }
 
-    Message.prototype.appendTo = function(parent, previous) {
+    Message.prototype.appendTo = function (parent, previous) {
         if (oneSpeech(previous, this)) {
             previous.node.parentNode.appendChild(this.node);
         } else {
@@ -209,37 +211,43 @@ Talk.format = function(content) {
         return this;
     };
 
-
     // Begin new speech after 3 hours
     var speechGap = 3600000 * 3;
 
     function oneSpeech(a, b) {
-        return a.date === b.date &&
+        return (
+            a.date === b.date &&
             b.timestamp - a.timestamp < speechGap &&
-            oneContext(a.data, b.data);
+            oneContext(a.data, b.data)
+        );
     }
 
     function oneContext(a, b) {
-        return a.role_id === b.role_id &&
+        return (
+            a.role_id === b.role_id &&
             a.nickname === b.nickname &&
-            a.recipient_role_id == b.recipient_role_id;
+            a.recipient_role_id == b.recipient_role_id
+        );
     }
 
     function appendSpeech(data, parent) {
         var speech = renderSpeech({
             role_id: data.role_id,
             nickname: data.nickname,
-            userpicUrl: Userpics.getUrl(data)
+            userpicUrl: Userpics.getUrl(data),
         });
         var node = speech[0];
         var recipient_id = data.recipient_role_id;
         if (recipient_id) {
             var recipient = renderRecipient({
                 role_id: recipient_id,
-                nickname: recipient_id === Room.myRole.role_id ? 'я' : data.recipient_nickname
+                nickname:
+                    recipient_id === Room.myRole.role_id
+                        ? "я"
+                        : data.recipient_nickname,
             });
-            speech.find('.speech-author').append(recipient);
-            speech.addClass('personal');
+            speech.find(".speech-author").append(recipient);
+            speech.addClass("personal");
         }
         parent.appendChild(node);
         return node;
@@ -254,7 +262,6 @@ Talk.format = function(content) {
         return fragment;
     }
 
-
     // Section constructor
     function Section(selector, capacity) {
         this.container = $(selector)[0];
@@ -262,41 +269,47 @@ Talk.format = function(content) {
         this.messages = [];
     }
 
-    Section.prototype.reset = function(messages) {
+    Section.prototype.reset = function (messages) {
         this.messages = messages;
-        this.container.textContent = '';
+        this.container.textContent = "";
         if (messages.length) {
             var fragment = renderFragment(messages);
             this.container.appendChild(fragment);
         }
     };
 
-    Section.prototype.prepend = function(messages) {
+    Section.prototype.prepend = function (messages) {
         var fragment = renderFragment(messages);
         this.messages = messages.concat(this.messages);
         this.container.insertBefore(fragment, this.container.firstChild);
         this.join(messages.length);
     };
 
-    Section.prototype.append = function(messages) {
-        var fragment = renderFragment(messages, this.messages[this.messages.length - 1]);
+    Section.prototype.append = function (messages) {
+        var fragment = renderFragment(
+            messages,
+            this.messages[this.messages.length - 1],
+        );
         this.messages = this.messages.concat(messages);
         this.container.appendChild(fragment);
     };
 
-    Section.prototype.join = function(index) {
+    Section.prototype.join = function (index) {
         var m1 = this.messages[index - 1];
         var m2 = this.messages[index];
         if (m1 && m2 && oneSpeech(m1, m2)) {
-            $(m2.node.parentNode).detach().find('.message').appendTo(m1.node.parentNode);
+            $(m2.node.parentNode)
+                .detach()
+                .find(".message")
+                .appendTo(m1.node.parentNode);
         }
     };
 
-    Section.prototype.shift = function() {
+    Section.prototype.shift = function () {
         var index = this.messages.length - this.capacity;
         if (index > 0) {
             var cut = $(this.messages[index].node);
-            cut.prevAll('.message').detach();
+            cut.prevAll(".message").detach();
             cut.parent().prevAll().detach();
             var removed = this.messages.splice(0, index);
             this.restoreFirstDate();
@@ -304,17 +317,17 @@ Talk.format = function(content) {
         }
     };
 
-    Section.prototype.pop = function() {
+    Section.prototype.pop = function () {
         var count = this.messages.length - this.capacity;
         if (count > 0) {
             var cut = $(this.messages[this.capacity - 1].node);
-            cut.nextAll('.message').detach();
+            cut.nextAll(".message").detach();
             cut.parent().nextAll().detach();
             return this.messages.splice(this.capacity);
         }
     };
 
-    Section.prototype.remove = function(index) {
+    Section.prototype.remove = function (index) {
         var node = this.messages[index].node;
         var speech = node.parentNode;
         this.messages.splice(index, 1);
@@ -328,9 +341,9 @@ Talk.format = function(content) {
         }
     };
 
-    Section.prototype.setIgnore = function(values, isVisible) {
+    Section.prototype.setIgnore = function (values, isVisible) {
         var messages = this.messages;
-        for (var i = messages.length; i--;) {
+        for (var i = messages.length; i--; ) {
             var data = messages[i].data;
             if (values[data.message_id]) {
                 data.ignore = values[data.message_id];
@@ -341,7 +354,7 @@ Talk.format = function(content) {
         }
     };
 
-    Section.prototype.restoreFirstDate = function() {
+    Section.prototype.restoreFirstDate = function () {
         var first = this.messages[0];
         if (first) {
             var date = Talk.getDate(first.date).node;
@@ -351,7 +364,7 @@ Talk.format = function(content) {
         }
     };
 
-    Talk.createMessage = function(data) {
+    Talk.createMessage = function (data) {
         var room = Rooms.selected;
         data.isMy = room.isMy(data);
         if (!data.isMy && data.mentions) {
@@ -361,33 +374,32 @@ Talk.format = function(content) {
     };
 
     Talk.Section = Section;
-
 })();
 
 // Sections
-(function() {
-
+(function () {
     var myRole;
 
-    var previous = $('.talk-previous'),
-        recent = $('.talk-recent'),
-        next = $('.talk-next');
+    var previous = $(".talk-previous"),
+        recent = $(".talk-recent"),
+        next = $(".talk-next");
 
-    var archive = new Talk.Section('.talk-archive', 380),
-        current = new Talk.Section('.talk-current', 500);
+    var archive = new Talk.Section(".talk-archive", 380),
+        current = new Talk.Section(".talk-current", 500);
 
     // Leave a margin to push new messages
     current.overflow = 20;
 
-    current.reduceCapacity = function(reduced) {
+    current.reduceCapacity = function (reduced) {
         this.capacity = reduced ? 80 : 500;
     };
 
-    current.setLast = function(message) {
-        this.last = message || lastOf(this.messages) || {data: {message_id: 0}};
+    current.setLast = function (message) {
+        this.last = message ||
+            lastOf(this.messages) || { data: { message_id: 0 } };
     };
 
-    current.vacant = function() {
+    current.vacant = function () {
         return this.capacity - this.messages.length;
     };
 
@@ -402,8 +414,8 @@ Talk.format = function(content) {
     function getMessages(conditions) {
         var options = {
             room_id: Room.data.room_id,
-            order_by: {'-desc': 'message_id'},
-            for_me: Talk.forMeOnly ? 1 : 0
+            order_by: { "-desc": "message_id" },
+            for_me: Talk.forMeOnly ? 1 : 0,
         };
         if (conditions) {
             $.extend(options, conditions);
@@ -413,21 +425,21 @@ Talk.format = function(content) {
 
     function loadBefore(message) {
         return getMessages({
-            message_id: {'<': message.data.message_id}
+            message_id: { "<": message.data.message_id },
         });
     }
 
     function loadAfter(message) {
         return getMessages({
-            message_id: {'>': message.data.message_id},
-            order_by: {'-asc': 'message_id'}
+            message_id: { ">": message.data.message_id },
+            order_by: { "-asc": "message_id" },
         });
     }
 
     function loadAfterDate(date) {
         return getMessages({
-            created: {'>': date.toISOString()},
-            order_by: {'-asc': 'message_id'}
+            created: { ">": date.toISOString() },
+            order_by: { "-asc": "message_id" },
         });
     }
 
@@ -450,7 +462,7 @@ Talk.format = function(content) {
         current.reset(messages.map(Talk.createMessage));
         current.setLast();
         Talk.scrollDown();
-        Talk.content.removeClass('talk-loading');
+        Talk.content.removeClass("talk-loading");
         Talk.reflowDates();
     }
 
@@ -480,22 +492,22 @@ Talk.format = function(content) {
 
     function cleanDates() {
         Talk.content
-            .find('.date')
-            .filter(function(i, elem) {
-                return $(elem).next('.speech').length === 0;
+            .find(".date")
+            .filter(function (i, elem) {
+                return $(elem).next(".speech").length === 0;
             })
             .detach();
         current.restoreFirstDate();
     }
 
-    Talk.loadRecent = function() {
+    Talk.loadRecent = function () {
         return getMessages()
             .then(togglePrevious)
             .then(useIgnores)
             .done(showRecent);
     };
 
-    Talk.updateIgnore = function(ignore) {
+    Talk.updateIgnore = function (ignore) {
         var content = Talk.content.get(0);
         var offset = content.scrollHeight - content.scrollTop;
         archive.setIgnore(ignore, isVisible);
@@ -507,16 +519,19 @@ Talk.format = function(content) {
     };
 
     function findLast(messages, callback) {
-        for (var i = messages.length; i--;) {
+        for (var i = messages.length; i--; ) {
             if (callback(messages[i])) return messages[i];
         }
     }
 
-    Talk.find = function(callback) {
-        return findLast(current.messages, callback) || findLast(archive.messages, callback)
+    Talk.find = function (callback) {
+        return (
+            findLast(current.messages, callback) ||
+            findLast(archive.messages, callback)
+        );
     };
 
-    Talk.getData = function(callback) {
+    Talk.getData = function (callback) {
         var message = this.find(callback);
         if (message) {
             return message.data;
@@ -525,31 +540,31 @@ Talk.format = function(content) {
 
     // Стираем сообщения последней комнаты,
     // чтобы не видеть их при загрузке следующей
-    Rooms.on('explore', function() {
+    Rooms.on("explore", function () {
         Talk.reset();
     });
 
     // То же самое, если комната недоступна
-    Rooms.on('selected.denied', function() {
+    Rooms.on("selected.denied", function () {
         Talk.reset();
     });
 
-    Rooms.on('select', function() {
-        Talk.content.addClass('talk-loading');
+    Rooms.on("select", function () {
+        Talk.content.addClass("talk-loading");
     });
 
-    Rooms.on('selected.ready', function(room) {
+    Rooms.on("selected.ready", function (room) {
         myRole = room.myRole;
         Talk.forMeOnly = room.forMeOnly || false;
         Talk.loadRecent();
     });
 
-    Talk.reset = function() {
+    Talk.reset = function () {
         archive.reset([]);
         current.reset([]);
     };
 
-    Talk.appendMessage = function(data) {
+    Talk.appendMessage = function (data) {
         if (data.message_id > current.last.data.message_id) {
             var message = Talk.createMessage(data);
             var lastSpeech = current.last.node && current.last.node.parentNode;
@@ -572,14 +587,14 @@ Talk.format = function(content) {
         }
     };
 
-    Talk.updateMessage = function(data) {
-        var updated = Talk.find(function(message) {
+    Talk.updateMessage = function (data) {
+        var updated = Talk.find(function (message) {
             return data.message_id === message.data.message_id;
         });
         if (updated) {
-            var text = $(updated.node).find('.msg-text');
-            var edit = text.find('.msg-edit').detach();
-            text.html(Talk.format(data.content) || '…').append(edit);
+            var text = $(updated.node).find(".msg-text");
+            var edit = text.find(".msg-edit").detach();
+            text.html(Talk.format(data.content) || "…").append(edit);
             updated.data.content = data.content;
             Talk.reflowDates(); // because of new message height
         }
@@ -587,7 +602,7 @@ Talk.format = function(content) {
 
     function toggleArchive(visible) {
         $(archive.container).toggle(visible);
-        $(current.container).toggleClass('talk-splitted', visible);
+        $(current.container).toggleClass("talk-splitted", visible);
         next.toggle(visible);
         recent.toggle(visible);
     }
@@ -600,7 +615,9 @@ Talk.format = function(content) {
             current.restoreFirstDate();
         } else if (messages.length > current.vacant()) {
             current.reduceCapacity(true);
-            archive.reset(messages.concat(current.shift()).slice(0, archive.capacity));
+            archive.reset(
+                messages.concat(current.shift()).slice(0, archive.capacity),
+            );
             toggleArchive(true);
         } else {
             current.prepend(messages);
@@ -668,14 +685,14 @@ Talk.format = function(content) {
     var loading;
 
     function loaded() {
-        loading.removeClass('talk-loading');
+        loading.removeClass("talk-loading");
         loading = null;
     }
 
     function initNavigation(elem, load) {
-        elem.find('.talk-load').on('click', function() {
+        elem.find(".talk-load").on("click", function () {
             if (!loading) {
-                loading = elem.addClass('talk-loading');
+                loading = elem.addClass("talk-loading");
                 load().always(loaded);
             }
         });
@@ -685,47 +702,47 @@ Talk.format = function(content) {
         return (archive.messages.length ? archive : current).messages[0];
     }
 
-    initNavigation(previous, function() {
+    initNavigation(previous, function () {
         var first = getFirstMessage();
         var offset = first.node.getBoundingClientRect().top;
         return loadBefore(first)
             .then(togglePrevious)
             .then(useIgnores)
-            .done(function(data) {
+            .done(function (data) {
                 showPrevious(data);
                 Talk.restoreOffset(first.node, offset);
                 Talk.scrollAbove();
             });
     });
 
-    initNavigation(next, function() {
+    initNavigation(next, function () {
         var last = lastOf(archive.messages);
         return loadAfter(last)
             .then(useIgnores)
-            .done(function(data) {
+            .done(function (data) {
                 updateSections(showNext, data, last.node);
             });
     });
 
-    initNavigation(recent, function() {
+    initNavigation(recent, function () {
         var first = current.messages[0];
         current.reduceCapacity(false);
         return loadBefore(first)
             .then(togglePrevious)
             .then(useIgnores)
-            .done(function(data) {
+            .done(function (data) {
                 updateSections(showMoreRecent, data, first.node);
             });
     });
 
     // Datepicker
-    var datepicker = $.Datepicker('#datepicker', function(date) {
+    var datepicker = $.Datepicker("#datepicker", function (date) {
         if (loading) return false;
-        loading = Talk.content.addClass('talk-loading');
+        loading = Talk.content.addClass("talk-loading");
         loadAfterDate(date)
             .then(useIgnores)
             .done(replaceArchive)
-            .done(function() {
+            .done(function () {
                 if (date.getTime() < Date.parse(Room.data.created)) {
                     previous.hide();
                 }
@@ -733,9 +750,9 @@ Talk.format = function(content) {
             .always(loaded);
     });
 
-    var dpControl = $('.header-date-text');
+    var dpControl = $(".header-date-text");
 
-    dpControl.on('click', function(event) {
+    dpControl.on("click", function (event) {
         var df = new Date(Room.data.created);
         var dc = new Date(getFirstMessage().timestamp);
         var dl = new Date();
@@ -744,68 +761,52 @@ Talk.format = function(content) {
     });
 
     // Remove obsolete edit icons
-    $window.on('date.changed', function() {
+    $window.on("date.changed", function () {
         var room = Rooms.selected;
-        var editAfter = (new Date).setHours(0, 0, 0, 0) - (24 * 60 * 60 * 1000);
-        current.messages.forEach(function(message) {
+        var editAfter = new Date().setHours(0, 0, 0, 0) - 24 * 60 * 60 * 1000;
+        current.messages.forEach(function (message) {
             if (room.isMy(message.data) && message.timestamp < editAfter) {
-                $(message.node).find('.msg-edit').detach();
-            };
+                $(message.node).find(".msg-edit").detach();
+            }
         });
     });
-
 })();
 
 // Update ignored messages
-(function() {
-
+(function () {
     var timer;
     var ignore = {};
 
     function setIgnore() {
         clearTimeout(timer);
-        Talk.scrollQueue(function(next) {
+        Talk.scrollQueue(function (next) {
             Talk.updateIgnore(ignore);
             ignore = {};
             next();
         });
     }
-
-    Rooms.pipe('message.ignore.updated', function(room, data) {
-        if (room === Rooms.selected) {
-            ignore[data.message_id] = data.ignore;
-            timer = setTimeout(setIgnore, 50);
-        }
-    });
-
 })();
 
-// Apply ignores
-Socket.on('me.ignores.updated', function() {
-    Talk.loadRecent();
-});
-
 // User actions
-(function() {
-
+(function () {
     var content = Talk.content;
 
     function parseRecipient(context) {
-        var elem = $(context).find('.speech-recipient');
+        var elem = $(context).find(".speech-recipient");
         return {
-            role_id: Number(elem.attr('data-role')),
-            nickname: elem.find('.recipient-nickname').text()
+            role_id: Number(elem.attr("data-role")),
+            nickname: elem.find(".recipient-nickname").text(),
         };
     }
 
     function getMessageData(speech) {
-        return Talk.getData(function(message) {
+        return Talk.getData(function (message) {
             return message.node.parentNode === speech;
         });
     }
 
     function getRole(elem) {
-        var role_id = Number(elem.getAttribute('data-role'));
+        var role_id = Number(elem.getAttribute("data-role"));
         var role = role_id && Rooms.selected.rolesOnline.get(role_id);
         return role || getMessageData(elem.parentNode);
     }
@@ -821,73 +822,71 @@ Socket.on('me.ignores.updated', function() {
 
     function getMention(elem) {
         return {
-            role_id: Number(elem.parentNode.getAttribute('data-role')),
-            nickname: elem.textContent
+            role_id: Number(elem.parentNode.getAttribute("data-role")),
+            nickname: elem.textContent,
         };
     }
 
-    content.on('click', '.userpic', function(event) {
+    content.on("click", ".userpic", function (event) {
         event.stopPropagation();
         var role = getRole(this.parentNode);
         Profile.show(role, {
-            nickname: $(this).next('.nickname').text(),
+            nickname: $(this).next(".nickname").text(),
             target: this,
-            inTalk: true
+            inTalk: true,
         });
     });
 
-    content.on('click', '.nickname', function() {
-        var speech = $(this).closest('.speech');
-        if (speech.hasClass('personal')) {
+    content.on("click", ".nickname", function () {
+        var speech = $(this).closest(".speech");
+        if (speech.hasClass("personal")) {
             replyPersonal(this.parentNode);
         } else {
             Room.replyTo(getMention(this));
         }
     });
 
-    content.on('click', '.speech-recipient', function() {
+    content.on("click", ".speech-recipient", function () {
         replyPersonal(this.parentNode);
     });
 
-    content.on('click', '.msg-edit', function() {
-        Room.edit($(this).closest('.message'));
+    content.on("click", ".msg-edit", function () {
+        Room.edit($(this).closest(".message"));
     });
 
-    Room.editLast = function() {
-        var icons = content.find('.msg-edit');
+    Room.editLast = function () {
+        var icons = content.find(".msg-edit");
         if (icons.length) {
-            Room.edit(icons.last().closest('.message'));
+            Room.edit(icons.last().closest(".message"));
         }
     };
-
 })();
 
 // Sticky dates
-(function() {
-
+(function () {
     var content = Talk.content.get(0);
-    var value = $('.header-date-text');
+    var value = $(".header-date-text");
 
     var dates = [];
     var min, max;
 
     function getTop(node) {
-        return node.getBoundingClientRect().top
+        return node.getBoundingClientRect().top;
     }
 
     function updateDates(node) {
         var offset = getTop(content) - content.scrollTop - 6;
-        dates = Talk.content.find('.date').map(function(i, node) {
+        dates = Talk.content.find(".date").map(function (i, node) {
             return {
-                text: $(node).find('.date-text').text(),
-                offset: i ? getTop(node) - offset : -Infinity
+                text: $(node).find(".date-text").text(),
+                offset: i ? getTop(node) - offset : -Infinity,
             };
         });
     }
 
     function toggle(offset) {
         max = Infinity;
-        for (var i = dates.length; i--;) {
+        for (var i = dates.length; i--; ) {
             if (dates[i].offset <= offset) {
                 value.text(dates[i].text);
                 min = dates[i].offset;
@@ -905,75 +904,69 @@ Socket.on('me.ignores.updated', function() {
         }
     }
 
-    Talk.reflowDates = function() {
+    Talk.reflowDates = function () {
         var active = dates.length > 1;
         updateDates();
         if (dates.length) {
             toggle(content.scrollTop);
         } else {
-            value.text('Сегодня');
+            value.text("Сегодня");
         }
         if (dates.length < 2 && active) {
-            content.removeEventListener('scroll', check, false);
-            window.removeEventListener('resize', updateDates);
+            content.removeEventListener("scroll", check, false);
+            window.removeEventListener("resize", updateDates);
         }
         if (dates.length > 1 && !active) {
-            content.addEventListener('scroll', check, false);
-            window.addEventListener('resize', updateDates);
+            content.addEventListener("scroll", check, false);
+            window.addEventListener("resize", updateDates);
         }
     };
-
 })();
 
 // Filter messages for me
-(function() {
+(function () {
+    var toolbar = $(".header-toolbar"),
+        control = $(".filter-my");
 
-    var toolbar = $('.header-toolbar'),
-        control = $('.filter-my');
-
-    Rooms.on('selected.ready', function(room) {
-        control.toggleClass('filter-my-selected', room.forMeOnly === true);
+    Rooms.on("selected.ready", function (room) {
+        control.toggleClass("filter-my-selected", room.forMeOnly === true);
     });
 
-    control.on('click', function() {
-        if (toolbar.data('wasDragged')) return;
+    control.on("click", function () {
+        if (toolbar.data("wasDragged")) return;
         var room = Rooms.selected;
         room.forMeOnly = !room.forMeOnly;
         Talk.forMeOnly = room.forMeOnly;
-        control.toggleClass('filter-my-selected', Talk.forMeOnly);
-        Talk.content.addClass('talk-loading');
+        control.toggleClass("filter-my-selected", Talk.forMeOnly);
+        Talk.content.addClass("talk-loading");
         Talk.loadRecent();
     });
-
 })();
 
 // Notifications switch
-(function() {
-
-    var toolbar = $('.header-toolbar'),
-        control = $('.toolbar-sound');
+(function () {
+    var toolbar = $(".header-toolbar"),
+        control = $(".toolbar-sound");
 
     if (!Rooms.soundEnabled) {
         control.hide();
         return false;
     }
 
-    Rooms.on('selected.ready', function(room) {
-        control.toggleClass('toolbar-sound-on', room.soundOn);
+    Rooms.on("selected.ready", function (room) {
+        control.toggleClass("toolbar-sound-on", room.soundOn);
     });
 
-    control.on('click', function() {
-        if (toolbar.data('wasDragged')) return;
+    control.on("click", function () {
+        if (toolbar.data("wasDragged")) return;
         var room = Rooms.selected;
         room.toggleSound();
-        control.toggleClass('toolbar-sound-on', room.soundOn);
+        control.toggleClass("toolbar-sound-on", room.soundOn);
     });
-
 })();
 
 // Talk scrolling
-(function() {
-
+(function () {
     var content = Talk.content.get(0);
 
     var scroller = $({}),
@@ -1012,56 +1005,62 @@ Socket.on('me.ignores.updated', function() {
         Talk.content.dequeue();
     }
 
-    content.addEventListener('wheel', stopScrolling);
-    content.addEventListener('touchstart', stopScrolling);
+    content.addEventListener("wheel", stopScrolling);
+    content.addEventListener("touchstart", stopScrolling);
 
-    Talk.scrollBy = function(shift) {
+    Talk.scrollBy = function (shift) {
         content.scrollTop += shift;
     };
 
-    Talk.restoreOffset = function(node, offset) {
+    Talk.restoreOffset = function (node, offset) {
         content.scrollTop += node.getBoundingClientRect().top - offset;
     };
 
-    Talk.fixScroll = function() {
-        if (!scrolling && content.scrollTop > getMaxScroll()) content.scrollTop--;
+    Talk.fixScroll = function () {
+        if (!scrolling && content.scrollTop > getMaxScroll())
+            content.scrollTop--;
     };
 
-    Talk.scrollQueue = function(callback) {
+    Talk.scrollQueue = function (callback) {
         this.content.queue(callback);
     };
 
-    Talk.scrollAbove = function() {
+    Talk.scrollAbove = function () {
         var cur = content.scrollTop;
         var pos = Math.max(0, cur - 150);
         scroller[0].position = cur;
         scroller.delay(150);
-        scroller.animate({position: pos}, {
-            duration: 400,
-            step: setPosition
-        });
+        scroller.animate(
+            { position: pos },
+            {
+                duration: 400,
+                step: setPosition,
+            },
+        );
     };
 
-    Talk.scrollFurther = function(node) {
-        this.content.queue(function(next) {
+    Talk.scrollFurther = function (node) {
+        this.content.queue(function (next) {
             var cur = content.scrollTop;
             var pos = getMaxScroll();
             if (pos > cur && !interrupted && node.parentNode && isNear(node)) {
                 scrolling = true;
                 scroller[0].position = cur;
-                scroller.animate({position: pos}, {
-                    complete: scrollEnd,
-                    duration: getDuration(cur, pos),
-                    step: setPosition
-                });
+                scroller.animate(
+                    { position: pos },
+                    {
+                        complete: scrollEnd,
+                        duration: getDuration(cur, pos),
+                        step: setPosition,
+                    },
+                );
             } else {
                 next();
             }
         });
     };
 
-    Talk.scrollDown = function() {
+    Talk.scrollDown = function () {
         content.scrollTop = getMaxScroll();
     };
-
 })();

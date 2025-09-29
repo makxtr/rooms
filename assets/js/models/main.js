@@ -146,115 +146,10 @@ Me.isHidden = function (data) {
     };
 })();
 
-// Socket
-(function () {
-    var Socket = Events.mixin({});
+// Import Phoenix socket for real-time functionality
+import socket from "../user_socket.js";
 
-    var path = "ws://localhost:4000/sockets/websocket?vsn=2.0.0&token=",
-        stream,
-        token;
-
-    var connectionTimer,
-        connectionTries = 0,
-        closedInstantly = 0;
-
-    function getConnectionDelay(tries) {
-        if (tries > 6) return 60;
-        if (tries > 0) return 10;
-        return 1;
-    }
-
-    function openSocket() {
-        connectionTries = 0;
-        if (window.WebSocket && WebSocket.CLOSED === 3) {
-            stream = new WebSocket(path + token);
-            stream.addEventListener("open", onOpen);
-            stream.addEventListener("message", onMessage);
-            stream.addEventListener("close", onClose);
-        }
-    }
-
-    function disconnect() {
-        clearTimeout(connectionTimer);
-        if (stream) {
-            stream.removeEventListener("open", onOpen);
-            stream.removeEventListener("message", onMessage);
-            stream.removeEventListener("close", onClose);
-            stream.close();
-        }
-        stream = null;
-    }
-
-    function reconnect() {
-        clearTimeout(connectionTimer);
-        // Rest.sockets.get(Socket.id)
-        //     .then(openSocket)
-        //     .catch(socketLost);
-        // Заглушка вместо REST API вызова
-        openSocket();
-    }
-
-    function socketLost(xhr) {
-        if (xhr.status == 404) {
-            Socket.id = null;
-            Socket.trigger("lost");
-        } else {
-            connectLater();
-        }
-    }
-
-    function connectLater() {
-        var tries = connectionTries++;
-        var delay = closedInstantly > 1 ? getConnectionDelay(tries) : 5;
-        connectionTimer = setTimeout(reconnect, delay * 1000);
-    }
-
-    function socketCreated(socket) {
-        token = socket.token;
-        Socket.id = socket.socket_id;
-        Socket.trigger("created");
-        openSocket();
-    }
-
-    function onOpen() {
-        closedInstantly = 0;
-        Socket.connected = true;
-        Socket.trigger("connected");
-    }
-
-    function onClose(event) {
-        Socket.connected = false;
-        Socket.trigger("disconnected");
-        if (closedInstantly++ > 5) {
-            disconnect();
-        } else if (event.code !== 1000) {
-            connectLater();
-        }
-    }
-
-    function onMessage(message) {
-        var event = JSON.parse(message.data);
-        Socket.trigger(event[0], event[1]);
-    }
-
-    Socket.create = function () {
-        // return Rest.sockets.create()
-        //     .then(socketCreated);
-        // Заглушка - эмулируем создание сокета
-        const mockSocket = {
-            socket_id: "socket_" + Math.random().toString(36).substr(2, 9),
-            token: "token_" + Math.random().toString(36).substr(2, 16),
-            status: "created",
-        };
-        return Promise.resolve(mockSocket).then(socketCreated);
-    };
-
-    $window.on("beforeunload", disconnect);
-
-    window.Socket = Socket;
-})();
-
-// Get session and create socket
+// Get session and prepare app
 (function () {
     var errors = {
         406: "Пожалуйста, включите куки в&nbsp;вашем браузере",
@@ -264,7 +159,6 @@ Me.isHidden = function (data) {
 
     function prepare(saveSelected) {
         Me.fetch()
-            .then(Socket.create)
             .then(function () {
                 Rooms.reset(Me.subscriptions, saveSelected);
             })
@@ -279,55 +173,13 @@ Me.isHidden = function (data) {
 
     // when the page loads
     prepare(true);
-
-    // if socket has expired
-    Socket.on("lost", function () {
-        prepare();
-    });
 })();
 
-// Debug socket events
-(function () {
-    if (localStorage.getItem("debug")) {
-        var _trigger = Socket.trigger;
-
-        Socket.trigger = function (name, data) {
-            console.log(name, data);
-            _trigger.call(Socket, name, data);
-        };
-    }
-})();
-
-// Login in other tab
-Socket.on("me.user_id.updated", function () {
-    Me.authorized = true;
-    Me.reload(); // update rooms and ignores
-});
-
-// Logout in other tab
-Socket.on("me.deleted", function () {
-    Me.authorized = false;
-    if (Router.hash) {
-        Router.push("");
-    }
-});
-
-// Update rooms
-Socket.on("me.recent_rooms.updated", function (data) {
-    Me.recent_rooms = data.recent_rooms || [];
-});
-Socket.on("me.rooms.updated", function (data) {
-    Me.rooms = data.rooms || [];
-});
-
-// Update ignores
-Socket.on("me.ignores.updated", function (data) {
-    Me.ignores = data.ignores;
-    Me.trigger("ignores.updated");
-});
+// Phoenix socket event handlers will be set up in user_socket.js
 
 // Make core objects globally available for legacy code
 window.Rest = Rest;
 window.Router = Router;
 window.Me = Me;
-window.Socket = Socket;
+// window.Socket = Socket; // Removed old socket system
+window.socket = socket; // New Phoenix socket
