@@ -56,10 +56,7 @@ status: ## Проверить статус сервисов
 
 logs: ## Показать логи приложения
 	@echo "$(YELLOW)=== Phoenix ====$(NC)"
-	@if [ -f phoenix.log ]; then tail -20 phoenix.log; else echo "Логи Phoenix не найдены"; fi
-	@echo ""
-	@echo "$(YELLOW)=== PostgreSQL логи ====$(NC)"
-	@docker logs --tail 10 rooms_postgres 2>/dev/null || echo "PostgreSQL логи недоступны"
+	@if [ -f phoenix.log ]; then tail -40 phoenix.log; else echo "Логи Phoenix не найдены"; fi
 
 test: ## Запустить тесты
 	@mix test

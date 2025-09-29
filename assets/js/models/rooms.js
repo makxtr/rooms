@@ -234,11 +234,15 @@
     Rooms.on("presence.sync", function (presences) {
         if (Rooms.selected) {
             // Update online users list with Phoenix presence data
-            const onlineUsers = presences.map((user) => ({
+            const onlineUsers = presences.map((user, index) => ({
+                role_id: index + 1, // Временный role_id для совместимости
                 user_id: user.id,
                 nickname: user.nickname,
                 online: true,
                 phoenix_presence: true,
+                come_in: null, // Добавляем поле come_in для совместимости
+                level: 0, // Добавляем level для совместимости
+                status: null, // Добавляем status для совместимости
             }));
 
             // Trigger event for UI update

@@ -24,8 +24,13 @@ defmodule ChatsWeb.RoomChannel do
             # Send message to self to push presence state after join completes
             send(self(), :after_join)
 
-            {:ok, %{status: "joined", room_id: room_id, user_id: user_id, nickname: nickname},
-             socket}
+            {:ok,
+             %{
+               status: "joined",
+               room_id: room_id,
+               user_id: user_id,
+               nickname: nickname
+             }, socket}
 
           {:error, _reason} ->
             # Fallback: join without presence
