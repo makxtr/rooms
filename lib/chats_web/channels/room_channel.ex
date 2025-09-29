@@ -27,7 +27,7 @@ defmodule ChatsWeb.RoomChannel do
             {:ok, %{status: "joined", room_id: room_id, user_id: user_id, nickname: nickname},
              socket}
 
-          {:error, reason} ->
+          {:error, _reason} ->
             # Fallback: join without presence
             {:ok,
              %{
@@ -70,7 +70,7 @@ defmodule ChatsWeb.RoomChannel do
 
   # Handle other events
   @impl true
-  def handle_in(event, payload, socket) do
+  def handle_in(_event, _payload, socket) do
     {:noreply, socket}
   end
 
