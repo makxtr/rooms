@@ -90,7 +90,20 @@ $(".about-link").on("click", function (event) {
         if (data.status) {
             $role.find(".nickname").append(renderStatus(data.status));
         }
-        if (data.role_id === Rooms.selected.myRole.role_id) {
+        // Check if this is the current user (Phoenix Presence or legacy)
+        var isMe = false;
+        if (data.phoenix_presence) {
+            // For Phoenix Presence users, compare by user_id/session_id
+            isMe =
+                data.user_id === Rooms.selected.myRole?.user_id ||
+                data.user_id === Rooms.selected.myRole?.session_id ||
+                data.user_id === window.Me?.session_id;
+        } else {
+            // For legacy users, compare by role_id
+            isMe = data.role_id === Rooms.selected.myRole?.role_id;
+        }
+
+        if (isMe) {
             $role.addClass("me");
         }
         if (data.annoying) {
