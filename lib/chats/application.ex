@@ -15,6 +15,7 @@ defmodule Chats.Application do
       ChatsWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:chats, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Chats.PubSub},
+      ChatsWeb.Presence,
       # Start a worker by calling: Rooms.Worker.start_link(arg)
       # {Rooms.Worker, arg},
       # Start to serve requests, typically the last entry

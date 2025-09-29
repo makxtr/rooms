@@ -147,7 +147,7 @@ Me.isHidden = function (data) {
 })();
 
 // Import Phoenix socket for real-time functionality
-import socket from "../user_socket.js";
+import PhoenixSocket from "../user_socket.js";
 
 // Get session and prepare app
 (function () {
@@ -182,4 +182,4 @@ window.Rest = Rest;
 window.Router = Router;
 window.Me = Me;
 // window.Socket = Socket; // Removed old socket system
-window.socket = socket; // New Phoenix socket
+window.PhoenixSocket = PhoenixSocket; // New Phoenix socket

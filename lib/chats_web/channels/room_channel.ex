@@ -1,13 +1,48 @@
 defmodule ChatsWeb.RoomChannel do
   use ChatsWeb, :channel
+  alias ChatsWeb.Presence
 
   @impl true
   def join("room:" <> room_id, payload, socket) do
-    if authorized?(payload) do
-      socket = assign(socket, :room_id, room_id)
-      {:ok, %{status: "joined", room_id: room_id}, socket}
-    else
-      {:error, %{reason: "unauthorized"}}
+    try do
+      if authorized?(payload) do
+        user_id = get_user_id(payload)
+        nickname = get_nickname(payload)
+
+        socket =
+          socket
+          |> assign(:room_id, room_id)
+          |> assign(:user_id, user_id)
+          |> assign(:nickname, nickname)
+
+        # Track user presence
+        case Presence.track(socket, socket.assigns.user_id, %{
+               nickname: socket.assigns.nickname,
+               online_at: inspect(System.system_time(:second))
+             }) do
+          {:ok, _} ->
+            # Send message to self to push presence state after join completes
+            send(self(), :after_join)
+
+            {:ok, %{status: "joined", room_id: room_id, user_id: user_id, nickname: nickname},
+             socket}
+
+          {:error, reason} ->
+            # Fallback: join without presence
+            {:ok,
+             %{
+               status: "joined_no_presence",
+               room_id: room_id,
+               user_id: user_id,
+               nickname: nickname
+             }, socket}
+        end
+      else
+        {:error, %{reason: "unauthorized"}}
+      end
+    rescue
+      error ->
+        {:error, %{reason: "join_error", details: inspect(error)}}
     end
   end
 
@@ -36,8 +71,13 @@ defmodule ChatsWeb.RoomChannel do
   # Handle other events
   @impl true
   def handle_in(event, payload, socket) do
-    IO.puts("Unhandled event: #{event}")
-    IO.inspect(payload)
+    {:noreply, socket}
+  end
+
+  # Handle after join message
+  @impl true
+  def handle_info(:after_join, socket) do
+    push(socket, "presence_state", Presence.list(socket))
     {:noreply, socket}
   end
 
@@ -45,5 +85,15 @@ defmodule ChatsWeb.RoomChannel do
   defp authorized?(_payload) do
     # Для тестирования разрешаем всем
     true
+  end
+
+  defp get_user_id(payload) do
+    # Генерируем временный ID если не передан
+    payload["user_id"] || "temp_user_#{:rand.uniform(100_000)}"
+  end
+
+  defp get_nickname(payload) do
+    # Используем переданное имя или генерируем случайное
+    payload["nickname"] || "Гость#{:rand.uniform(1000)}"
   end
 end

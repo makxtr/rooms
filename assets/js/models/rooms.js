@@ -230,6 +230,22 @@
         this.trigger("updated");
     };
 
+    // Handle Phoenix presence events
+    Rooms.on("presence.sync", function (presences) {
+        if (Rooms.selected) {
+            // Update online users list with Phoenix presence data
+            const onlineUsers = presences.map((user) => ({
+                user_id: user.id,
+                nickname: user.nickname,
+                online: true,
+                phoenix_presence: true,
+            }));
+
+            // Trigger event for UI update
+            Rooms.trigger("selected.presence.updated", onlineUsers);
+        }
+    });
+
     window.Rooms = Rooms;
 })();
 
@@ -275,6 +291,15 @@
             }
         }
         this.eventsBuffer = null;
+
+        // Join Phoenix channel for real-time updates
+        if (window.PhoenixSocket && this.data.hash) {
+            window.PhoenixSocket.joinRoom(this.data.hash, {
+                nickname: this.myRole?.nickname,
+                user_id: this.myRole?.user_id || this.myRole?.session_id,
+            });
+        }
+
         return this;
     }
 
@@ -312,6 +337,12 @@
                 Rest.subscriptions.destroy(this.subscription.subscription_id);
                 this.subscription = null;
             }
+
+            // Leave Phoenix channel
+            if (window.PhoenixSocket) {
+                window.PhoenixSocket.leaveRoom();
+            }
+
             this.setState(null);
         },
 
