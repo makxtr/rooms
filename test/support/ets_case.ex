@@ -14,15 +14,12 @@ defmodule Chats.EtsCase do
   setup _tags do
     # Инициализируем ETS таблицы для тестов, если еще не созданы
     if :ets.info(:rooms) == :undefined, do: Chats.Room.init()
-    if :ets.info(:online_users) == :undefined, do: Chats.OnlineUsers.init()
 
     # Очищаем таблицы перед и после каждого теста
     :ets.delete_all_objects(:rooms)
-    :ets.delete_all_objects(:online_users)
 
     on_exit(fn ->
       :ets.delete_all_objects(:rooms)
-      :ets.delete_all_objects(:online_users)
     end)
 
     :ok
