@@ -36,7 +36,7 @@ defmodule Chats.SessionContext do
   Updates only allowed session fields
   """
   def update_fields(session, params) do
-    allowed_fields = [:nickname, :ignores, :subscriptions]
+    allowed_fields = [:nickname, :status, :ignores, :subscriptions]
 
     Enum.reduce(allowed_fields, session, fn field, acc ->
       case Map.get(params, Atom.to_string(field)) do

@@ -26,15 +26,18 @@ const PhoenixSocket = {
         currentChannel = socket.channel(`room:${roomId}`, {
             nickname: userParams.nickname || window.Me?.nickname || "Гость",
             user_id: userParams.user_id || window.Me?.session_id || null,
+            status: userParams.status || window.Me?.status || null,
         });
 
         function updatePresences() {
             const presences = Presence.list(presenceState, (id, { metas }) => {
-                return {
+                const user = {
                     id: id,
                     nickname: metas[0].nickname,
+                    status: metas[0].status,
                     online_at: metas[0].online_at,
                 };
+                return user;
             });
 
             // Trigger custom event for the app
@@ -58,7 +61,7 @@ const PhoenixSocket = {
         currentChannel
             .join()
             .receive("ok", (resp) => {
-                console.log("Joined room:", roomId);
+                // Room joined successfully
             })
             .receive("error", (resp) => {
                 console.error("Failed to join room:", resp);
@@ -79,6 +82,12 @@ const PhoenixSocket = {
     // Get current channel
     getCurrentChannel() {
         return currentChannel;
+    },
+
+    updatePresence(updates) {
+        if (currentChannel) {
+            currentChannel.push("update_presence", updates);
+        }
     },
 };
 

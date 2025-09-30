@@ -238,11 +238,11 @@
                 role_id: index + 1, // Временный role_id для совместимости
                 user_id: user.id,
                 nickname: user.nickname,
+                status: user.status, // Добавляем статус из Phoenix Presence
                 online: true,
                 phoenix_presence: true,
                 come_in: null, // Добавляем поле come_in для совместимости
                 level: 0, // Добавляем level для совместимости
-                status: null, // Добавляем status для совместимости
             }));
 
             // Trigger event for UI update
@@ -279,12 +279,19 @@
     function subscribed(data) {
         this.update(data.room);
         this.myRole = data.role;
+        // Дополняем myRole данными из сессии
+        if (window.Me) {
+            this.myRole.nickname = window.Me.nickname || this.myRole.nickname;
+            this.myRole.status = window.Me.status || this.myRole.status;
+            this.myRole.session_id = window.Me.session_id;
+        }
         this.subscription = data.subscription;
         this.soundOn = Boolean(
             localStorage.getItem("sound_in_" + this.data.room_id),
         );
         this.rolesOnline.reset(data.roles_online);
-        this.rolesOnline.add(data.role);
+        // Добавляем myRole в список онлайн пользователей с обновленными данными из сессии
+        this.rolesOnline.add(this.myRole);
         this.rolesWaiting.reset(data.roles_waiting || []);
         this.rolesWaiting.enabled = Boolean(data.roles_waiting);
         this.setState("ready");

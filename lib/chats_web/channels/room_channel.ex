@@ -8,16 +8,19 @@ defmodule ChatsWeb.RoomChannel do
       if authorized?(payload) do
         user_id = get_user_id(payload)
         nickname = get_nickname(payload)
+        status = get_status(payload)
 
         socket =
           socket
           |> assign(:room_id, room_id)
           |> assign(:user_id, user_id)
           |> assign(:nickname, nickname)
+          |> assign(:status, status)
 
         # Track user presence
         case Presence.track(socket, socket.assigns.user_id, %{
                nickname: socket.assigns.nickname,
+               status: socket.assigns.status,
                online_at: inspect(System.system_time(:second))
              }) do
           {:ok, _} ->
@@ -73,6 +76,28 @@ defmodule ChatsWeb.RoomChannel do
     {:noreply, socket}
   end
 
+  # Handle presence updates
+  @impl true
+  def handle_in("update_presence", payload, socket) do
+    socket =
+      socket
+      |> maybe_assign(:nickname, payload["nickname"])
+      |> maybe_assign(:status, payload["status"])
+
+    # Обновляем presence
+    case Presence.update(socket, socket.assigns.user_id, %{
+           nickname: socket.assigns.nickname,
+           status: socket.assigns.status,
+           online_at: inspect(System.system_time(:second))
+         }) do
+      {:ok, _} ->
+        {:reply, {:ok, %{status: "updated"}}, socket}
+
+      {:error, reason} ->
+        {:reply, {:error, %{reason: reason}}, socket}
+    end
+  end
+
   # Handle other events
   @impl true
   def handle_in(_event, _payload, socket) do
@@ -101,4 +126,13 @@ defmodule ChatsWeb.RoomChannel do
     # Используем переданное имя или генерируем случайное
     payload["nickname"] || "Гость#{:rand.uniform(1000)}"
   end
+
+  defp get_status(payload) do
+    # Статус может быть nil
+    payload["status"]
+  end
+
+  # Обновляет assign только если значение не nil
+  defp maybe_assign(socket, key, nil), do: socket
+  defp maybe_assign(socket, key, value), do: assign(socket, key, value)
 end

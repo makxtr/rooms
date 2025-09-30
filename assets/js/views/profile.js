@@ -124,10 +124,34 @@
 
 // Update current role
 Profile.send = function (data) {
-    var role = this.role;
-    if (role) {
-        return Rest.roles.update(role.role_id, data);
-    }
+    // Используем sessions API вместо roles для обновления профиля
+    return Rest.sessions.update("me", data).done(function (response) {
+        // Обновляем данные в Me после успешного сохранения
+        if (data.nickname) window.Me.nickname = data.nickname;
+        if (data.status !== undefined) window.Me.status = data.status;
+
+        // Обновляем myRole если есть выбранная комната
+        if (
+            window.Rooms &&
+            window.Rooms.selected &&
+            window.Rooms.selected.myRole
+        ) {
+            var room = window.Rooms.selected;
+            var myRole = room.myRole;
+
+            if (data.nickname) myRole.nickname = data.nickname;
+            if (data.status !== undefined) myRole.status = data.status;
+
+            // Обновляем Phoenix Presence
+            if (window.PhoenixSocket && window.PhoenixSocket.updatePresence) {
+                var presenceUpdates = {};
+                if (data.nickname) presenceUpdates.nickname = data.nickname;
+                if (data.status !== undefined)
+                    presenceUpdates.status = data.status;
+                window.PhoenixSocket.updatePresence(presenceUpdates);
+            }
+        }
+    });
 };
 
 /* Role details */
@@ -329,8 +353,9 @@ Profile.send = function (data) {
 
     Profile.on("edit", function () {
         var role = Profile.role;
-        nickname.val(role.nickname);
-        status.val(role.status);
+        // Используем данные из сессии для nickname и status
+        nickname.val(window.Me?.nickname || role.nickname);
+        status.val(window.Me?.status || role.status || "");
         if (Me.provider_id != null) {
             photo.find("a").attr("href", "/api/login/" + login[Me.provider_id]);
             photo.css(
