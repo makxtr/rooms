@@ -54,6 +54,10 @@ status: ## Проверить статус сервисов
 		echo "  ❌ Не запущено"; \
 	fi
 
+routes: ## Показать все маршруты приложения
+	@echo "$(YELLOW)=== Routes ====$(NC)"
+	@mix phx.routes
+
 logs: ## Показать логи приложения
 	@echo "$(YELLOW)=== Phoenix ====$(NC)"
 	@if [ -f phoenix.log ]; then tail -40 phoenix.log; else echo "Логи Phoenix не найдены"; fi

@@ -133,6 +133,6 @@ defmodule ChatsWeb.RoomChannel do
   end
 
   # Обновляет assign только если значение не nil
-  defp maybe_assign(socket, key, nil), do: socket
+  defp maybe_assign(socket, _key, nil), do: socket
   defp maybe_assign(socket, key, value), do: assign(socket, key, value)
 end
