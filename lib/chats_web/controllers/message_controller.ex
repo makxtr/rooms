@@ -7,20 +7,20 @@ defmodule ChatsWeb.MessageController do
       %{
         message_id: 1,
         room_id: 1,
-        role_id: 1,
+        user_id: "user_1",
         nickname: "User1",
         content: "Hello, world!",
         created: DateTime.utc_now() |> DateTime.to_iso8601(),
-        recipient_role_id: nil
+        recipient_user_id: nil
       },
       %{
         message_id: 2,
         room_id: 1,
-        role_id: 2,
+        user_id: "user_2",
         nickname: "User2",
         content: "Hi there!",
         created: DateTime.utc_now() |> DateTime.to_iso8601(),
-        recipient_role_id: nil
+        recipient_user_id: nil
       }
     ]
 
@@ -32,11 +32,11 @@ defmodule ChatsWeb.MessageController do
     message_data = %{
       message_id: :rand.uniform(10000),
       room_id: params["room_id"] || 1,
-      role_id: 1,
+      user_id: params["user_id"] || "user_1",
       nickname: "TestUser",
       content: params["content"] || "New message",
       created: DateTime.utc_now() |> DateTime.to_iso8601(),
-      recipient_role_id: params["recipient_role_id"]
+      recipient_user_id: params["recipient_user_id"]
     }
 
     json(conn, message_data)

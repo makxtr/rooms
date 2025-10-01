@@ -90,18 +90,11 @@ $(".about-link").on("click", function (event) {
         if (data.status) {
             $role.find(".nickname").append(renderStatus(data.status));
         }
-        // Check if this is the current user (Phoenix Presence or legacy)
-        var isMe = false;
-        if (data.phoenix_presence) {
-            // For Phoenix Presence users, compare by user_id/session_id
-            isMe =
-                data.user_id === Rooms.selected.myRole?.user_id ||
-                data.user_id === Rooms.selected.myRole?.session_id ||
-                data.user_id === window.Me?.session_id;
-        } else {
-            // For legacy users, compare by role_id
-            isMe = data.role_id === Rooms.selected.myRole?.role_id;
-        }
+        // Check if this is the current user
+        var isMe =
+            data.user_id === Rooms.selected.myRole?.user_id ||
+            data.user_id === Rooms.selected.myRole?.session_id ||
+            data.user_id === window.Me?.session_id;
 
         if (isMe) {
             $role.addClass("me");
@@ -109,7 +102,7 @@ $(".about-link").on("click", function (event) {
         if (data.annoying) {
             $role.addClass("annoying");
         }
-        $role.attr("data-role", data.role_id);
+        $role.attr("data-user", data.user_id);
         return $role[0];
     }
 
@@ -214,8 +207,8 @@ $(".about-link").on("click", function (event) {
 
     function getData(elem) {
         var room = Rooms.selected;
-        var role_id = Number(elem.attr("data-role"));
-        return room.rolesOnline.get(role_id) || room.rolesWaiting.get(role_id);
+        var user_id = elem.attr("data-user");
+        return room.rolesOnline.get(user_id) || room.rolesWaiting.get(user_id);
     }
 
     container.on("click", ".me, .userpic", function (event) {

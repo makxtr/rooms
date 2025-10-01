@@ -234,15 +234,14 @@
     Rooms.on("presence.sync", function (presences) {
         if (Rooms.selected) {
             // Update online users list with Phoenix presence data
-            const onlineUsers = presences.map((user, index) => ({
-                role_id: index + 1, // Временный role_id для совместимости
+            const onlineUsers = presences.map((user) => ({
                 user_id: user.id,
                 nickname: user.nickname,
-                status: user.status, // Добавляем статус из Phoenix Presence
+                status: user.status,
                 online: true,
                 phoenix_presence: true,
-                come_in: null, // Добавляем поле come_in для совместимости
-                level: 0, // Добавляем level для совместимости
+                come_in: null,
+                level: 0,
             }));
 
             // Trigger event for UI update
@@ -381,18 +380,18 @@
         },
 
         isMy: function (data) {
-            return data.role_id === this.myRole.role_id;
+            return data.user_id === this.myRole.user_id;
         },
 
         mentionsMe: function (mentions) {
-            var me = this.myRole.role_id;
+            var me = this.myRole.user_id;
             for (var i = mentions.length; i--; ) {
                 if (mentions[i] === me) return true;
             }
         },
 
         isForMe: function (message) {
-            if (this.myRole.role_id === message.recipient_role_id) {
+            if (this.myRole.user_id === message.recipient_user_id) {
                 return true;
             } else if (message.mentions) {
                 return this.mentionsMe(message.mentions);
@@ -401,7 +400,7 @@
 
         isVisible: function (message) {
             var me = this.myRole;
-            if (message.role_id === me.role_id) {
+            if (message.user_id === me.user_id) {
                 return true;
             }
             if (!me.isModerator && Me.isHidden(message)) {
@@ -467,7 +466,7 @@
 
     function updateRole(room, data) {
         room.rolesOnline.update(data);
-        if (room.myRole.role_id === data.role_id) {
+        if (room.myRole.user_id === data.user_id) {
             $.extend(room.myRole, data);
         }
         updated(room);

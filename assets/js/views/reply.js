@@ -81,7 +81,7 @@
                 content: content,
             };
             if (recipient) {
-                options.recipient_role_id = recipient.role_id;
+                options.recipient_user_id = recipient.user_id;
                 cancelPrivate();
             } else {
                 options.mentions = getMentions(content);
@@ -233,7 +233,7 @@
         var raw = field.get(0);
         var pos = raw.selectionStart;
         if (role && role.nickname) {
-            mentionsIndex[role.nickname] = role.role_id;
+            mentionsIndex[role.nickname] = role.user_id;
             field.focus().val(role.nickname + ", " + field.val());
             if ("setSelectionRange" in raw) {
                 pos = pos ? pos + role.nickname.length + 2 : raw.value.length;

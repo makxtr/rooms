@@ -224,25 +224,25 @@ Talk.format = function (content) {
 
     function oneContext(a, b) {
         return (
-            a.role_id === b.role_id &&
+            a.user_id === b.user_id &&
             a.nickname === b.nickname &&
-            a.recipient_role_id == b.recipient_role_id
+            a.recipient_user_id == b.recipient_user_id
         );
     }
 
     function appendSpeech(data, parent) {
         var speech = renderSpeech({
-            role_id: data.role_id,
+            user_id: data.user_id,
             nickname: data.nickname,
             userpicUrl: Userpics.getUrl(data),
         });
         var node = speech[0];
-        var recipient_id = data.recipient_role_id;
+        var recipient_id = data.recipient_user_id;
         if (recipient_id) {
             var recipient = renderRecipient({
-                role_id: recipient_id,
+                user_id: recipient_id,
                 nickname:
-                    recipient_id === Room.myRole.role_id
+                    recipient_id === Room.myRole.user_id
                         ? "я"
                         : data.recipient_nickname,
             });
@@ -794,7 +794,7 @@ Talk.format = function (content) {
     function parseRecipient(context) {
         var elem = $(context).find(".speech-recipient");
         return {
-            role_id: Number(elem.attr("data-role")),
+            user_id: elem.attr("data-user"),
             nickname: elem.find(".recipient-nickname").text(),
         };
     }
@@ -806,8 +806,8 @@ Talk.format = function (content) {
     }
 
     function getRole(elem) {
-        var role_id = Number(elem.getAttribute("data-role"));
-        var role = role_id && Rooms.selected.rolesOnline.get(role_id);
+        var user_id = elem.getAttribute("data-user");
+        var role = user_id && Rooms.selected.rolesOnline.get(user_id);
         return role || getMessageData(elem.parentNode);
     }
 
@@ -822,7 +822,7 @@ Talk.format = function (content) {
 
     function getMention(elem) {
         return {
-            role_id: Number(elem.parentNode.getAttribute("data-role")),
+            user_id: elem.parentNode.getAttribute("data-user"),
             nickname: elem.textContent,
         };
     }

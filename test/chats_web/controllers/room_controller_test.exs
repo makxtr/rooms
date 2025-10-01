@@ -94,7 +94,6 @@ defmodule ChatsWeb.RoomControllerTest do
                },
                "subscription" => %{"subscription_id" => _},
                "role" => %{
-                 "role_id" => _,
                  "nickname" => _
                },
                "roles_online" => []

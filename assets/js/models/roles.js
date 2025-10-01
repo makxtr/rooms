@@ -1,11 +1,10 @@
 // Roles collection
-(function() {
-
+(function () {
     var extend = Object.assign || $.extend;
 
     // Compare function for sorting
     function byAlias(a, b) {
-        if (a.alias > b.alias) return  1;
+        if (a.alias > b.alias) return 1;
         if (a.alias < b.alias) return -1;
         return 0;
     }
@@ -17,7 +16,8 @@
 
     // Insert role into sorted array and return inserted position
     function insertRole(list, role) {
-        var i = 0, l = list.length;
+        var i = 0,
+            l = list.length;
         while (i < l && role.alias > list[i].alias) {
             i++;
         }
@@ -25,16 +25,14 @@
         return i;
     }
 
-
     // Remove role from array
     function removeRole(list, role) {
-        for (var i = list.length; i--;) {
+        for (var i = list.length; i--; ) {
             if (list[i] === role) {
                 return list.splice(i, 1)[0];
             }
         }
     }
-
 
     // Collection constructor
     function Roles() {
@@ -43,39 +41,38 @@
     }
 
     Roles.prototype = {
-
-        reset: function(roles) {
+        reset: function (roles) {
             this.index = {};
             this.items = [];
             roles.forEach(setAlias);
             roles.sort(byAlias);
-            for (var i = roles.length; i--;) {
+            for (var i = roles.length; i--; ) {
                 var role = roles[i];
-                this.index[role.role_id] = role;
+                this.index[role.user_id] = role;
                 this.items[i] = role;
             }
         },
 
-        add: function(data) {
-            if (this.index[data.role_id]) {
+        add: function (data) {
+            if (this.index[data.user_id]) {
                 this.update(data);
             } else {
                 setAlias(data);
                 insertRole(this.items, data);
-                this.index[data.role_id] = data;
+                this.index[data.user_id] = data;
             }
         },
 
-        remove: function(roleId) {
-            var role = this.index[roleId];
+        remove: function (userId) {
+            var role = this.index[userId];
             if (role) {
                 removeRole(this.items, role);
-                delete this.index[roleId];
+                delete this.index[userId];
             }
         },
 
-        update: function(data) {
-            var role = this.index[data.role_id];
+        update: function (data) {
+            var role = this.index[data.user_id];
             if (role) {
                 extend(role, data);
                 if (data.nickname) {
@@ -86,9 +83,9 @@
             }
         },
 
-        updateUser: function(data) {
+        updateUser: function (data) {
             var roles = this.items;
-            for (var i = roles.length; i--;) {
+            for (var i = roles.length; i--; ) {
                 if (roles[i].user_id === data.user_id) {
                     extend(roles[i], data);
                     return;
@@ -96,10 +93,9 @@
             }
         },
 
-        get: function(roleId) {
-            return this.index[roleId];
-        }
-
+        get: function (userId) {
+            return this.index[userId];
+        },
     };
 
     // Export helpers to use in view
@@ -109,9 +105,9 @@
     var roomUrl = /(^|\s)(#[\w\-+]+)\b/g;
     var emoji = /[\uD800-\uDBFF\uDC00-\uDFFF\u200D]+/g;
 
-    Roles.formatStatus = function(status) {
+    Roles.formatStatus = function (status) {
         var s = status;
-        if (~s.indexOf('#')) {
+        if (~s.indexOf("#")) {
             s = s.replace(roomUrl, '$1<a class="room-link" href="/$2">$2</a>');
         }
         s = s.replace(emoji, '<span class="emoji">$&</span>');
@@ -119,7 +115,4 @@
     };
 
     Rooms.Roles = Roles;
-
 })();
-
-

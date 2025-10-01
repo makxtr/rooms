@@ -58,8 +58,8 @@ Room.handleEvent = function (event) {
     function locked(data) {
         if (Room.data.level === 80) {
             Room.trigger("closed");
-        } else if (data && data.role_id) {
-            Room.comeIn = data.role_id;
+        } else if (data && data.user_id) {
+            Room.comeIn = data.user_id;
             Room.trigger("locked", true);
         } else {
             Room.trigger("locked");
@@ -89,7 +89,7 @@ Room.handleEvent = function (event) {
     };
 
     Room.on("role.come_in.updated", function (role) {
-        if (Room.comeIn === role.role_id && role.come_in === null) {
+        if (Room.comeIn === role.user_id && role.come_in === null) {
             Room.comeIn = null;
             Rest.rooms.get(Room.hash).done(subscribe).fail(stop);
         }
@@ -100,9 +100,9 @@ Room.handleEvent = function (event) {
     });
 })();
 
-// Compare role_id with my role
+// Compare user_id with my role
 Room.isMy = function (data) {
-    return this.myRole ? this.myRole.role_id === data.role_id : false;
+    return this.myRole ? this.myRole.user_id === data.user_id : false;
 };
 
 // Update room
@@ -130,7 +130,7 @@ Room.on("subscription.deleted", function (data) {
     if (Room.data.level === 80) {
         Room.trigger("closed");
     } else if (Room.myRole.level < Room.data.level) {
-        Room.comeIn = data.role_id;
+        Room.comeIn = data.user_id;
         Room.trigger("locked", true);
     }
 });
@@ -149,7 +149,7 @@ Room.on("room.deleted.updated", function (data) {
 
 // Update my nickname
 Room.on("role.nickname.updated", function (role) {
-    if (Room.myRole.role_id === role.role_id) {
+    if (Room.myRole.user_id === role.user_id) {
         Room.myRole.nickname = role.nickname;
         Room.trigger("my.nickname.updated", role);
     }
@@ -157,14 +157,14 @@ Room.on("role.nickname.updated", function (role) {
 
 // Update my status
 Room.on("role.status.updated", function (role) {
-    if (Room.myRole.role_id === role.role_id) {
+    if (Room.myRole.user_id === role.user_id) {
         Room.myRole.status = role.status;
     }
 });
 
 // Ignored
 Room.on("role.ignored.updated", function (role) {
-    if (Room.myRole.role_id === role.role_id) {
+    if (Room.myRole.user_id === role.user_id) {
         Room.myRole.ignored = role.ignored;
     }
 });
@@ -241,7 +241,7 @@ Room.on("user.photo.updated", function (user) {
     }
 
     Room.on("role.level.updated", function (data) {
-        if (Room.myRole.role_id === data.role_id) {
+        if (Room.myRole.user_id === data.user_id) {
             Room.myRole.level = data.level;
             checkLevel();
         }

@@ -10,7 +10,7 @@
         if (data.come_in) {
             room.rolesWaiting.add(data);
         } else {
-            room.rolesWaiting.remove(data.role_id);
+            room.rolesWaiting.remove(data.user_id);
         }
         apply(room);
     }
@@ -128,7 +128,7 @@
 
     // Play sound instantly and save role to skip related event
     Profile.whip = function () {
-        whippedByMe = Profile.role.role_id;
+        whippedByMe = Profile.role.user_id;
         whipSound.play(0.5);
     };
 })();
@@ -141,7 +141,7 @@
     var isActive = false;
 
     function updateRole(data) {
-        if (isActive && Profile.role.role_id === data.role_id) {
+        if (isActive && Profile.role.user_id === data.user_id) {
             var role = $.extend(Profile.role, data);
             Profile.trigger("moderated", getState(role));
             Profile.fit();
@@ -319,7 +319,7 @@
         return Boolean(
             me.isAdmin ||
                 !role.moderator_id ||
-                role.moderator_id === me.role_id,
+                role.moderator_id === me.user_id,
         );
     }
 

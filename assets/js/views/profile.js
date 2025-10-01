@@ -49,7 +49,7 @@
         $popup.show();
         Profile.fit();
         if (role.message_id) {
-            Rest.roles.get(role.role_id).done(function (data) {
+            Rest.roles.get(role.user_id).done(function (data) {
                 $.extend(role, data);
                 preloadPhoto(role);
             });
@@ -95,7 +95,7 @@
     }
 
     function updateByRole(data) {
-        if (Profile.role && Profile.role.role_id === data.role_id) {
+        if (Profile.role && Profile.role.user_id === data.user_id) {
             updateRole(data);
         }
     }
