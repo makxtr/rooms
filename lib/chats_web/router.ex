@@ -41,10 +41,6 @@ defmodule ChatsWeb.Router do
     # Messages
     get "/messages", MessageController, :index
     post "/messages", MessageController, :create
-
-    # Roles
-    get "/roles/:role_id", RoleController, :show
-    get "/roles", RoleController, :index
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

@@ -48,37 +48,11 @@ defmodule ChatsWeb.RoomController do
     attrs = %{"creator_session_id" => SessionContext.get_creator_session_id(conn)}
 
     {:ok, room} = RoomContext.find_or_create_room(hash, attrs)
-
-    # Определяем права пользователя
     session_data = get_session(conn, :session_data)
-    current_session_id = if session_data, do: session_data[:session_id], else: nil
-    nickname = if session_data, do: session_data[:nickname], else: "Anonymous"
 
-    # Уникальный идентификатор: user_id для авторизованных, session_id для гостей
-    user_id =
-      if session_data do
-        session_data[:user_id] || session_data[:session_id]
-      else
-        "guest_#{:rand.uniform(100_000)}"
-      end
+    response = RoomContext.enter_room(room, session_data, socket_id)
 
-    # Создатель комнаты получает level 80 и права админа
-    is_creator = room.creator_session_id == current_session_id
-    level = if is_creator, do: 80, else: 0
-    # Админ (70) или создатель (80)
-    is_admin = level >= 70
-
-    json(conn, %{
-      room: RoomContext.format_room_response(room),
-      subscription: %{subscription_id: "temp_#{room.id}_#{socket_id}"},
-      role: %{
-        nickname: nickname,
-        level: level,
-        isAdmin: is_admin,
-        user_id: user_id
-      },
-      roles_online: []
-    })
+    json(conn, response)
   end
 
   @doc """

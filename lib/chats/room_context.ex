@@ -132,4 +132,52 @@ defmodule Chats.RoomContext do
       watched: room.watched
     }
   end
+
+  @doc """
+  Builds enter room response with user role and permissions
+  """
+  def enter_room(room, session_data, socket_id) do
+    %{
+      room: format_room_response(room),
+      subscription: build_subscription(room, socket_id),
+      role: build_user_role(room, session_data),
+      roles_online: []
+    }
+  end
+
+  # Private functions for building enter room response
+
+  defp build_user_role(room, session_data) do
+    user_id = get_user_id(session_data)
+    nickname = get_nickname(session_data)
+    permissions = calculate_permissions(room, session_data)
+
+    %{
+      nickname: nickname,
+      level: permissions.level,
+      isAdmin: permissions.is_admin,
+      user_id: user_id
+    }
+  end
+
+  defp get_user_id(nil), do: "guest_#{:rand.uniform(100_000)}"
+
+  defp get_user_id(session_data) do
+    session_data[:user_id] || session_data[:session_id]
+  end
+
+  defp get_nickname(nil), do: "Anonymous"
+  defp get_nickname(session_data), do: session_data[:nickname] || "Anonymous"
+
+  defp calculate_permissions(room, session_data) do
+    current_session_id = if session_data, do: session_data[:session_id], else: nil
+    is_creator = room.creator_session_id == current_session_id
+    level = if is_creator, do: 80, else: 0
+
+    %{level: level, is_admin: level >= 70}
+  end
+
+  defp build_subscription(room, socket_id) do
+    %{subscription_id: "temp_#{room.id}_#{socket_id}"}
+  end
 end
