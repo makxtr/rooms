@@ -10,6 +10,8 @@ defmodule ChatsWeb.RoomChannel do
         nickname = Map.get(payload, "nickname", "Гость")
         status = Map.get(payload, "status")
 
+        socket = assign(socket, user_id: user_id)
+
         case Presence.track(socket, user_id, %{
                nickname: nickname,
                status: status
@@ -53,11 +55,11 @@ defmodule ChatsWeb.RoomChannel do
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room:lobby).
   @impl true
-  def handle_in("message", %{"body" => body, "user_id" => user_id}, socket) do
+  def handle_in("message", %{"body" => body}, socket) do
     message = %{
       message_id: :rand.uniform(10000),
       body: body,
-      user_id: user_id,
+      user_id: socket.assigns.user_id,
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
     }
 
@@ -68,12 +70,11 @@ defmodule ChatsWeb.RoomChannel do
   # Handle presence updates
   @impl true
   def handle_in("update_presence", payload, socket) do
-    user_id = Map.get(payload, "user_id")
     nickname = Map.get(payload, "nickname")
     status = Map.get(payload, "status")
 
     # Обновляем presence
-    case Presence.update(socket, user_id, %{
+    case Presence.update(socket, socket.assigns.user_id, %{
            nickname: nickname,
            status: status
          }) do

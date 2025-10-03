@@ -11,7 +11,7 @@
 
     // Normalize nickname for case-insensitive sorting
     function setAlias(role) {
-        role.alias = role.nickname.toLowerCase();
+        role.alias = (role.nickname || "").toLowerCase();
     }
 
     // Insert role into sorted array and return inserted position
