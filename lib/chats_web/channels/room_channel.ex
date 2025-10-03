@@ -6,25 +6,15 @@ defmodule ChatsWeb.RoomChannel do
   def join("room:" <> room_id, payload, socket) do
     try do
       if authorized?(payload) do
-        user_id = get_user_id(payload)
-        nickname = get_nickname(payload)
-        status = get_status(payload)
+        user_id = Map.get(payload, "user_id")
+        nickname = Map.get(payload, "nickname", "Гость")
+        status = Map.get(payload, "status")
 
-        socket =
-          socket
-          |> assign(:room_id, room_id)
-          |> assign(:user_id, user_id)
-          |> assign(:nickname, nickname)
-          |> assign(:status, status)
-
-        # Track user presence
-        case Presence.track(socket, socket.assigns.user_id, %{
-               nickname: socket.assigns.nickname,
-               status: socket.assigns.status,
-               online_at: inspect(System.system_time(:second))
+        case Presence.track(socket, user_id, %{
+               nickname: nickname,
+               status: status
              }) do
           {:ok, _} ->
-            # Send message to self to push presence state after join completes
             send(self(), :after_join)
 
             {:ok,
@@ -36,7 +26,6 @@ defmodule ChatsWeb.RoomChannel do
              }, socket}
 
           {:error, _reason} ->
-            # Fallback: join without presence
             {:ok,
              %{
                status: "joined_no_presence",
@@ -79,16 +68,14 @@ defmodule ChatsWeb.RoomChannel do
   # Handle presence updates
   @impl true
   def handle_in("update_presence", payload, socket) do
-    socket =
-      socket
-      |> maybe_assign(:nickname, payload["nickname"])
-      |> maybe_assign(:status, payload["status"])
+    user_id = Map.get(payload, "user_id")
+    nickname = Map.get(payload, "nickname")
+    status = Map.get(payload, "status")
 
     # Обновляем presence
-    case Presence.update(socket, socket.assigns.user_id, %{
-           nickname: socket.assigns.nickname,
-           status: socket.assigns.status,
-           online_at: inspect(System.system_time(:second))
+    case Presence.update(socket, user_id, %{
+           nickname: nickname,
+           status: status
          }) do
       {:ok, _} ->
         {:reply, {:ok, %{status: "updated"}}, socket}
@@ -116,23 +103,4 @@ defmodule ChatsWeb.RoomChannel do
     # Для тестирования разрешаем всем
     true
   end
-
-  defp get_user_id(payload) do
-    # Генерируем временный ID если не передан
-    payload["user_id"] || "temp_user_#{:rand.uniform(100_000)}"
-  end
-
-  defp get_nickname(payload) do
-    # Используем переданное имя или генерируем случайное
-    payload["nickname"] || "Гость#{:rand.uniform(1000)}"
-  end
-
-  defp get_status(payload) do
-    # Статус может быть nil
-    payload["status"]
-  end
-
-  # Обновляет assign только если значение не nil
-  defp maybe_assign(socket, _key, nil), do: socket
-  defp maybe_assign(socket, key, value), do: assign(socket, key, value)
 end

@@ -8,6 +8,11 @@ socket.connect();
 let currentChannel = null;
 let presenceState = {};
 
+// Единая точка получения user_id
+function getUserId(userParams = {}) {
+    return userParams.user_id || window.Me?.session_id || null;
+}
+
 // Phoenix socket interface for the app
 const PhoenixSocket = {
     socket,
@@ -25,7 +30,7 @@ const PhoenixSocket = {
         // Join new room
         currentChannel = socket.channel(`room:${roomId}`, {
             nickname: userParams.nickname || window.Me?.nickname || "Гость",
-            user_id: userParams.user_id || window.Me?.session_id || null,
+            user_id: getUserId(userParams),
             status: userParams.status || window.Me?.status || null,
         });
 
@@ -84,9 +89,12 @@ const PhoenixSocket = {
         return currentChannel;
     },
 
-    updatePresence(updates) {
+    updatePresence(updates, userParams = {}) {
         if (currentChannel) {
-            currentChannel.push("update_presence", updates);
+            currentChannel.push("update_presence", {
+                ...updates,
+                user_id: getUserId(userParams),
+            });
         }
     },
 };
