@@ -53,11 +53,11 @@ defmodule ChatsWeb.RoomChannel do
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room:lobby).
   @impl true
-  def handle_in("message", %{"body" => body} = _payload, socket) do
+  def handle_in("message", %{"body" => body, "user_id" => user_id}, socket) do
     message = %{
       message_id: :rand.uniform(10000),
       body: body,
-      user_id: socket.assigns.user_id,
+      user_id: user_id,
       timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
     }
 
