@@ -4,44 +4,30 @@ defmodule ChatsWeb.RoomChannel do
 
   @impl true
   def join("room:" <> room_id, payload, socket) do
-    try do
-      if authorized?(payload) do
-        user_id = Map.get(payload, "user_id")
-        nickname = Map.get(payload, "nickname", "Гость")
-        status = Map.get(payload, "status")
+    unless authorized?(payload) do
+      {:error, %{reason: "unauthorized"}}
+    else
+      user_id = Map.get(payload, "user_id")
+      nickname = Map.get(payload, "nickname", "Гость")
+      status = Map.get(payload, "status")
 
-        socket = assign(socket, user_id: user_id)
+      socket = assign(socket, user_id: user_id)
 
-        case Presence.track(socket, user_id, %{
-               nickname: nickname,
-               status: status
-             }) do
-          {:ok, _} ->
-            send(self(), :after_join)
+      {:ok, _} =
+        Presence.track(socket, user_id, %{
+          nickname: nickname,
+          status: status
+        })
 
-            {:ok,
-             %{
-               status: "joined",
-               room_id: room_id,
-               user_id: user_id,
-               nickname: nickname
-             }, socket}
+      send(self(), :after_join)
 
-          {:error, _reason} ->
-            {:ok,
-             %{
-               status: "joined_no_presence",
-               room_id: room_id,
-               user_id: user_id,
-               nickname: nickname
-             }, socket}
-        end
-      else
-        {:error, %{reason: "unauthorized"}}
-      end
-    rescue
-      error ->
-        {:error, %{reason: "join_error", details: inspect(error)}}
+      {:ok,
+       %{
+         status: "joined",
+         room_id: room_id,
+         user_id: user_id,
+         nickname: nickname
+       }, socket}
     end
   end
 
@@ -73,17 +59,13 @@ defmodule ChatsWeb.RoomChannel do
     nickname = Map.get(payload, "nickname")
     status = Map.get(payload, "status")
 
-    # Обновляем presence
-    case Presence.update(socket, socket.assigns.user_id, %{
-           nickname: nickname,
-           status: status
-         }) do
-      {:ok, _} ->
-        {:reply, {:ok, %{status: "updated"}}, socket}
+    {:ok, _} =
+      Presence.update(socket, socket.assigns.user_id, %{
+        nickname: nickname,
+        status: status
+      })
 
-      {:error, reason} ->
-        {:reply, {:error, %{reason: reason}}, socket}
-    end
+    {:reply, {:ok, %{status: "updated"}}, socket}
   end
 
   # Handle other events

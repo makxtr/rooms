@@ -130,26 +130,12 @@ Profile.send = function (data) {
         if (data.nickname) window.Me.nickname = data.nickname;
         if (data.status !== undefined) window.Me.status = data.status;
 
-        // Обновляем myRole если есть выбранная комната
-        if (
-            window.Rooms &&
-            window.Rooms.selected &&
-            window.Rooms.selected.myRole
-        ) {
-            var room = window.Rooms.selected;
-            var myRole = room.myRole;
-
-            if (data.nickname) myRole.nickname = data.nickname;
-            if (data.status !== undefined) myRole.status = data.status;
-
-            // Обновляем Phoenix Presence
-            if (window.PhoenixSocket && window.PhoenixSocket.updatePresence) {
-                var presenceUpdates = {};
-                if (data.nickname) presenceUpdates.nickname = data.nickname;
-                if (data.status !== undefined)
-                    presenceUpdates.status = data.status;
-                window.PhoenixSocket.updatePresence(presenceUpdates);
-            }
+        // Обновляем Phoenix Presence - отправляем ВСЕ поля, не только изменённые
+        if (window.PhoenixSocket && window.PhoenixSocket.updatePresence) {
+            window.PhoenixSocket.updatePresence({
+                nickname: window.Me.nickname,
+                status: window.Me.status,
+            });
         }
     });
 };
