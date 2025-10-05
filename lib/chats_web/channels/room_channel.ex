@@ -4,31 +4,34 @@ defmodule ChatsWeb.RoomChannel do
 
   @impl true
   def join("room:" <> room_id, payload, socket) do
-    unless authorized?(payload) do
-      {:error, %{reason: "unauthorized"}}
-    else
-      user_id = Map.get(payload, "user_id")
-      nickname = Map.get(payload, "nickname", "Гость")
-      status = Map.get(payload, "status")
+    user_id = Map.get(payload, "user_id")
+    nickname = Map.get(payload, "nickname", "Гость")
+    status = Map.get(payload, "status")
 
-      socket = assign(socket, user_id: user_id)
+    socket = assign(socket, user_id: user_id)
 
-      {:ok, _} =
-        Presence.track(socket, user_id, %{
-          nickname: nickname,
-          status: status
-        })
+    {:ok, _} =
+      Presence.track(socket, user_id, %{
+        nickname: nickname,
+        status: status
+      })
 
-      send(self(), :after_join)
+    send(self(), :after_join)
 
-      {:ok,
-       %{
-         status: "joined",
-         room_id: room_id,
-         user_id: user_id,
-         nickname: nickname
-       }, socket}
-    end
+    {:ok,
+     %{
+       status: "joined",
+       room_id: room_id,
+       user_id: user_id,
+       nickname: nickname
+     }, socket}
+  end
+
+  # Handle after join message
+  @impl true
+  def handle_info(:after_join, socket) do
+    push(socket, "presence_state", Presence.list(socket))
+    {:noreply, socket}
   end
 
   # Channels can be used in a request/response fashion
@@ -72,18 +75,5 @@ defmodule ChatsWeb.RoomChannel do
   @impl true
   def handle_in(_event, _payload, socket) do
     {:noreply, socket}
-  end
-
-  # Handle after join message
-  @impl true
-  def handle_info(:after_join, socket) do
-    push(socket, "presence_state", Presence.list(socket))
-    {:noreply, socket}
-  end
-
-  # Add authorization logic here as required.
-  defp authorized?(_payload) do
-    # Для тестирования разрешаем всем
-    true
   end
 end

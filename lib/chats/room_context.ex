@@ -139,7 +139,6 @@ defmodule Chats.RoomContext do
   def enter_room(room, session_data) do
     %{
       room: format_room_response(room),
-      # subscription: build_subscription(room, socket_id),
       role: build_user_role(room, session_data),
       roles_online: []
     }
@@ -175,9 +174,5 @@ defmodule Chats.RoomContext do
     level = if is_creator, do: 80, else: 0
 
     %{level: level, is_admin: level >= 70}
-  end
-
-  defp build_subscription(room, socket_id) do
-    %{subscription_id: "temp_#{room.id}_#{socket_id}"}
   end
 end
