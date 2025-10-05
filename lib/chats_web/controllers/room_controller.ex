@@ -39,18 +39,20 @@ defmodule ChatsWeb.RoomController do
     |> json(RoomContext.format_room_response(room))
   end
 
-  @spec enter(Plug.Conn.t(), map()) :: Plug.Conn.t()
   @doc """
   POST /api/rooms/:hash/enter - войти в комнату
   """
-  def enter(conn, %{"hash" => hash} = params) do
-    socket_id = Map.get(params, "socket_id")
-    attrs = %{"creator_session_id" => SessionContext.get_creator_session_id(conn)}
+  def enter(conn, %{"hash" => hash} = _params) do
+    {:ok, room} =
+      RoomContext.find_or_create_room(hash, %{
+        "creator_session_id" => SessionContext.get_creator_session_id(conn)
+      })
 
-    {:ok, room} = RoomContext.find_or_create_room(hash, attrs)
-    session_data = get_session(conn, :session_data)
-
-    response = RoomContext.enter_room(room, session_data, socket_id)
+    response =
+      RoomContext.enter_room(
+        room,
+        get_session(conn, :session_data)
+      )
 
     json(conn, response)
   end

@@ -92,7 +92,6 @@ defmodule ChatsWeb.RoomControllerTest do
                  "room_id" => ^room_id,
                  "hash" => ^hash
                },
-               "subscription" => %{"subscription_id" => _},
                "role" => %{
                  "nickname" => _
                },

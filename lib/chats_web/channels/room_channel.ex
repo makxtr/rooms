@@ -65,7 +65,7 @@ defmodule ChatsWeb.RoomChannel do
         status: status
       })
 
-    {:reply, {:ok, %{status: "updated"}}, socket}
+    {:noreply, socket}
   end
 
   # Handle other events

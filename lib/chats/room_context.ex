@@ -136,10 +136,10 @@ defmodule Chats.RoomContext do
   @doc """
   Builds enter room response with user role and permissions
   """
-  def enter_room(room, session_data, socket_id) do
+  def enter_room(room, session_data) do
     %{
       room: format_room_response(room),
-      subscription: build_subscription(room, socket_id),
+      # subscription: build_subscription(room, socket_id),
       role: build_user_role(room, session_data),
       roles_online: []
     }
