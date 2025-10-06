@@ -38,3 +38,4 @@ npm-debug.log
 /phoenix.log
 /phoenix.pid
 
+.vscode/
