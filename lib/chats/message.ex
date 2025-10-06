@@ -51,7 +51,5 @@ defmodule Chats.Message do
     |> :ets.tab2list()
     |> Enum.filter(fn {{r_hash, _ts}, _msg} -> r_hash == room_hash end)
     |> Enum.each(fn {key, _msg} -> :ets.delete(@table_name, key) end)
-
-    :ok
   end
 end

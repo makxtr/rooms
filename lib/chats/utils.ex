@@ -1,15 +1,24 @@
 defmodule Chats.Utils do
   @doc """
-  Генерировать случайный hash
+  Unique for room hash
   """
   def gen_room_hash do
     hash(8)
   end
 
   @doc """
-  Generates secure session ID
+  Unique for session hash
+  16 bytes → 22 chars
   """
   def gen_session_hash do
+    hash(16)
+  end
+
+  @doc """
+  Unique for message hash
+  16 bytes → 22 chars
+  """
+  def gen_message_hash do
     hash(16)
   end
 
@@ -17,12 +26,9 @@ defmodule Chats.Utils do
     :crypto.strong_rand_bytes(size) |> Base.url_encode64(padding: false)
   end
 
-  # Генерировать ID из hash для совместимости с фронтом
   def gen_id_from_hash(hash) do
-    # Создаем консистентный integer ID из hash для фронта
     :erlang.phash2(hash, 1_000_000)
   end
-
 
   @doc """
   Generates random nickname for anonymous users

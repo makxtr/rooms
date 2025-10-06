@@ -51,11 +51,13 @@ defmodule ChatsWeb.RoomChannel do
   # broadcast to everyone in the current topic (room:lobby).
   @impl true
   def handle_in("new_message", %{"body" => body}, socket) do
-    room_hash = socket.assigns.room_hash
-    user_id = socket.assigns.user_id
-    nickname = socket.assigns.nickname
-
-    message = MessageContext.create(room_hash, user_id, nickname, body)
+    message =
+      MessageContext.create(
+        socket.assigns.room_hash,
+        socket.assigns.user_id,
+        socket.assigns.nickname,
+        body
+      )
 
     broadcast(socket, "new_message", message)
     {:reply, {:ok, message}, socket}

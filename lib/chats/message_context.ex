@@ -4,13 +4,14 @@ defmodule Chats.MessageContext do
   """
 
   alias Chats.Message
+  alias Chats.Utils
 
   @doc """
   Создает новое сообщение в комнате
   """
   def create(room_hash, user_id, nickname, body) do
     %{
-      message_id: generate_message_id(),
+      message_id: Utils.gen_message_hash(),
       room_hash: room_hash,
       body: body,
       user_id: user_id,
@@ -35,6 +36,7 @@ defmodule Chats.MessageContext do
   def format_one(message) do
     %{
       message_id: message.message_id,
+      room_hash: message.room_hash,
       body: message.body,
       user_id: message.user_id,
       nickname: message.nickname,
@@ -54,10 +56,5 @@ defmodule Chats.MessageContext do
   """
   def clear(room_hash) do
     Message.truncate(room_hash)
-  end
-
-  # Генерация уникального ID сообщения
-  defp generate_message_id do
-    :crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower)
   end
 end
