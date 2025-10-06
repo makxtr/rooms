@@ -76,18 +76,21 @@
     function send() {
         var content = field.val().trim();
         if (content) {
-            var options = {
-                room_id: Room.data.room_id,
-                content: content,
-            };
-            if (recipient) {
-                options.recipient_user_id = recipient.user_id;
-                cancelPrivate();
-            } else {
-                options.mentions = getMentions(content);
+            if (window.PhoenixSocket) {
+                window.PhoenixSocket.sendMessage(content)
+                    .then(function (msg) {
+                        $warning.hide();
+                    })
+                    .catch(function (err) {
+                        console.error("Failed to send message:", err);
+                        $warning.show();
+                    });
             }
-            Room.send(options);
+
             field.val("");
+            if (recipient) {
+                cancelPrivate();
+            }
         } else if (recipient) {
             cancelPrivate();
         }
@@ -97,7 +100,6 @@
         if (expanded) {
             collapseField();
         }
-        $warning.hide();
     }
 
     var mentionsIndex = {};

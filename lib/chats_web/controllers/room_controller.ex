@@ -32,7 +32,7 @@ defmodule ChatsWeb.RoomController do
         SessionContext.get_creator_session_id(conn)
       )
 
-    {:ok, room} = RoomContext.create_room(params_with_creator)
+    room = RoomContext.create_room(params_with_creator)
 
     conn
     |> put_status(:created)
@@ -43,7 +43,7 @@ defmodule ChatsWeb.RoomController do
   POST /api/rooms/:hash/enter - войти в комнату
   """
   def enter(conn, %{"hash" => hash} = _params) do
-    {:ok, room} =
+    room =
       RoomContext.find_or_create_room(hash, %{
         "creator_session_id" => SessionContext.get_creator_session_id(conn)
       })
@@ -80,7 +80,7 @@ defmodule ChatsWeb.RoomController do
     case RoomContext.get_random_room() do
       nil ->
         # Если нет комнат, создаем дефолтную
-        {:ok, room} = RoomContext.find_or_create_room("general", %{"topic" => "Общий чат"})
+        room = RoomContext.find_or_create_room("general", %{"topic" => "Общий чат"})
         json(conn, RoomContext.format_room_response(room))
 
       room ->

@@ -6,16 +6,14 @@ defmodule ChatsWeb.RoomControllerTest do
 
   # Fixture to create a test room
   defp room_fixture(attrs \\ %{}) do
-    default_attrs = %{
+    %{
       "hash" => "test-room-#{System.unique_integer([:positive])}",
       "topic" => "Test Room Topic",
       "level" => 0,
       "searchable" => true
     }
-
-    attrs = Map.merge(default_attrs, attrs)
-    {:ok, room} = RoomContext.create_room(attrs)
-    room
+    |> Map.merge(attrs)
+    |> RoomContext.create_room()
   end
 
   describe "GET /api/rooms/:hash" do

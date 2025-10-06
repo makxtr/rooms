@@ -9,6 +9,7 @@ defmodule Chats.Application do
   def start(_type, _args) do
     # Инициализируем ETS таблицы
     Chats.Room.init()
+    Chats.Message.init()
 
     children = [
       ChatsWeb.Telemetry,

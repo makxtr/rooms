@@ -1,14 +1,19 @@
 defmodule ChatsWeb.RoomChannel do
   use ChatsWeb, :channel
   alias ChatsWeb.Presence
+  alias Chats.MessageContext
 
   @impl true
-  def join("room:" <> room_id, payload, socket) do
+  def join("room:" <> room_hash, payload, socket) do
     user_id = Map.get(payload, "user_id")
     nickname = Map.get(payload, "nickname", "Гость")
     status = Map.get(payload, "status")
 
-    socket = assign(socket, user_id: user_id)
+    socket =
+      socket
+      |> assign(:user_id, user_id)
+      |> assign(:room_hash, room_hash)
+      |> assign(:nickname, nickname)
 
     {:ok, _} =
       Presence.track(socket, user_id, %{
@@ -21,9 +26,10 @@ defmodule ChatsWeb.RoomChannel do
     {:ok,
      %{
        status: "joined",
-       room_id: room_id,
+       room_hash: room_hash,
        user_id: user_id,
-       nickname: nickname
+       nickname: nickname,
+       messages: MessageContext.list(room_hash)
      }, socket}
   end
 
@@ -44,16 +50,15 @@ defmodule ChatsWeb.RoomChannel do
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (room:lobby).
   @impl true
-  def handle_in("message", %{"body" => body}, socket) do
-    message = %{
-      message_id: :rand.uniform(10000),
-      body: body,
-      user_id: socket.assigns.user_id,
-      timestamp: DateTime.utc_now() |> DateTime.to_iso8601()
-    }
+  def handle_in("new_message", %{"body" => body}, socket) do
+    room_hash = socket.assigns.room_hash
+    user_id = socket.assigns.user_id
+    nickname = socket.assigns.nickname
 
-    broadcast(socket, "message", message)
-    {:noreply, socket}
+    message = MessageContext.create(room_hash, user_id, nickname, body)
+
+    broadcast(socket, "new_message", message)
+    {:reply, {:ok, message}, socket}
   end
 
   # Handle presence updates

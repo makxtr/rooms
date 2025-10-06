@@ -3,7 +3,6 @@ defmodule Chats.RoomContextTest do
   use Chats.EtsCase
   alias Chats.RoomContext
 
-  # Fixture to create a test room
   defp room_fixture(attrs \\ %{}) do
     default_attrs = %{
       "hash" => "test-room-#{System.unique_integer([:positive])}",
@@ -13,8 +12,7 @@ defmodule Chats.RoomContextTest do
     }
 
     attrs = Map.merge(default_attrs, attrs)
-    {:ok, room} = RoomContext.create_room(attrs)
-    room
+    RoomContext.create_room(attrs)
   end
 
   describe "get_room_by_hash/1" do
@@ -52,19 +50,18 @@ defmodule Chats.RoomContextTest do
         "topic" => "Valid Room Topic"
       }
 
-      assert {:ok, room} = RoomContext.create_room(attrs)
+      assert room = RoomContext.create_room(attrs)
       assert room.hash == "valid-room"
       assert room.topic == "Valid Room Topic"
       # default
       assert room.level == 0
-      # default
       assert room.searchable == true
     end
 
     test "generates hash when not provided" do
       attrs = %{"topic" => "Room without hash"}
 
-      assert {:ok, room} = RoomContext.create_room(attrs)
+      assert room = RoomContext.create_room(attrs)
       assert is_binary(room.hash)
       assert String.length(room.hash) > 0
     end
@@ -73,8 +70,7 @@ defmodule Chats.RoomContextTest do
       room = room_fixture()
       attrs = %{"hash" => room.hash, "topic" => "Duplicate"}
 
-      # В ETS дубликаты перезаписывают, не ошибка
-      assert {:ok, updated_room} = RoomContext.create_room(attrs)
+      assert updated_room = RoomContext.create_room(attrs)
       assert updated_room.topic == "Duplicate"
     end
   end
@@ -98,7 +94,7 @@ defmodule Chats.RoomContextTest do
     test "returns existing room when found" do
       existing_room = room_fixture()
 
-      assert {:ok, room} = RoomContext.find_or_create_room(existing_room.hash)
+      assert room = RoomContext.find_or_create_room(existing_room.hash)
       assert room.hash == existing_room.hash
     end
 
@@ -106,7 +102,7 @@ defmodule Chats.RoomContextTest do
       hash = "new-room-#{System.unique_integer([:positive])}"
       attrs = %{"topic" => "New Room"}
 
-      assert {:ok, room} = RoomContext.find_or_create_room(hash, attrs)
+      assert room = RoomContext.find_or_create_room(hash, attrs)
       assert room.hash == hash
       assert room.topic == "New Room"
     end

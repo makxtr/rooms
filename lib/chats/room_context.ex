@@ -30,7 +30,7 @@ defmodule Chats.RoomContext do
     hash = attrs["hash"] || Utils.gen_room_hash()
     topic = attrs["topic"] || "##{hash}"
 
-    room = %{
+    %{
       id: Utils.gen_id_from_hash(hash),
       hash: hash,
       topic: topic,
@@ -41,8 +41,7 @@ defmodule Chats.RoomContext do
       creator_session_id: attrs["creator_session_id"],
       created_at: DateTime.utc_now()
     }
-
-    Room.insert(room)
+    |> Room.insert()
   end
 
   @doc """
@@ -63,7 +62,7 @@ defmodule Chats.RoomContext do
         create_room(room_attrs)
 
       room ->
-        {:ok, room}
+        room
     end
   end
 

@@ -501,10 +501,11 @@ Talk.format = function (content) {
     }
 
     Talk.loadRecent = function () {
-        return getMessages()
-            .then(togglePrevious)
-            .then(useIgnores)
-            .done(showRecent);
+        // Не загружаем сообщения через REST API
+        // Они приходят через Phoenix Channel при join
+        showRecent([]);
+        Talk.content.removeClass("talk-loading");
+        return $.Deferred().resolve([]);
     };
 
     Talk.updateIgnore = function (ignore) {
@@ -565,13 +566,31 @@ Talk.format = function (content) {
     };
 
     Talk.appendMessage = function (data) {
-        if (data.message_id > current.last.data.message_id) {
+        var shouldAppend =
+            !current.last ||
+            !current.last.data ||
+            !current.last.data.message_id ||
+            data.message_id !== current.last.data.message_id;
+
+        if (shouldAppend) {
             var message = Talk.createMessage(data);
-            var lastSpeech = current.last.node && current.last.node.parentNode;
+            var lastSpeech =
+                current.last &&
+                current.last.node &&
+                current.last.node.parentNode;
             Talk.fixScroll();
-            message.appendTo(current.container, current.last);
+
+            if (current.last) {
+                message.appendTo(current.container, current.last);
+            } else {
+                var fragment = document.createDocumentFragment();
+                var fakeLastMessage = { date: null, timestamp: 0, data: {} };
+                message.appendTo(fragment, fakeLastMessage);
+                current.container.appendChild(fragment);
+            }
+
             current.messages.push(message);
-            if (message.date !== current.last.date) {
+            if (!current.last || message.date !== current.last.date) {
                 Talk.reflowDates();
             }
             current.setLast(message);
@@ -582,9 +601,12 @@ Talk.format = function (content) {
                 Talk.scrollFurther(message.node);
             } else if (lastSpeech) {
                 Talk.scrollFurther(lastSpeech.nextSibling);
+            } else {
+                Talk.scrollDown();
             }
             return true;
         }
+        return false;
     };
 
     Talk.updateMessage = function (data) {
@@ -769,6 +791,14 @@ Talk.format = function (content) {
                 $(message.node).find(".msg-edit").detach();
             }
         });
+    });
+
+    Room.on("message.created", function (data) {
+        Talk.appendMessage(data);
+    });
+
+    Room.on("message.loaded", function (data) {
+        Talk.appendMessage(data);
     });
 })();
 

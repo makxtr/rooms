@@ -15,7 +15,7 @@ defmodule Chats.Room do
   """
   def insert(room) do
     :ets.insert(@table_name, {room.hash, room})
-    {:ok, room}
+    room
   end
 
   @doc """

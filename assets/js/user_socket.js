@@ -63,10 +63,39 @@ const PhoenixSocket = {
             updatePresences();
         });
 
+        // Handle new messages from other users
+        currentChannel.on("new_message", (message) => {
+            // Trigger event for the app to handle
+            if (window.Room) {
+                const messageData = {
+                    message_id: message.message_id,
+                    body: message.body,
+                    user_id: message.user_id,
+                    nickname: message.nickname,
+                    created: message.timestamp,
+                    content: message.body,
+                };
+                window.Room.trigger("message.created", messageData);
+            }
+        });
+
         currentChannel
             .join()
             .receive("ok", (resp) => {
                 // Room joined successfully
+                // Load message history if provided
+                if (resp.messages && window.Room) {
+                    resp.messages.forEach((msg) => {
+                        window.Room.trigger("message.loaded", {
+                            message_id: msg.message_id,
+                            body: msg.body,
+                            user_id: msg.user_id,
+                            nickname: msg.nickname,
+                            created: msg.timestamp,
+                            content: msg.body,
+                        });
+                    });
+                }
             })
             .receive("error", (resp) => {
                 console.error("Failed to join room:", resp);
@@ -96,6 +125,18 @@ const PhoenixSocket = {
                 user_id: getUserId(userParams),
             });
         }
+    },
+
+    sendMessage(body) {
+        if (currentChannel) {
+            return new Promise((resolve, reject) => {
+                currentChannel
+                    .push("new_message", { body: body })
+                    .receive("ok", (msg) => resolve(msg))
+                    .receive("error", (err) => reject(err));
+            });
+        }
+        return Promise.reject(new Error("Not connected to a room"));
     },
 };
 
