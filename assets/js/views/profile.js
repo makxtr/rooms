@@ -308,7 +308,7 @@ Profile.send = function (data) {
     var photo = form.find(".my-photo");
     var login = ["facebook", "vk", "ok"];
 
-    var roomUrl = /http\S+talkrooms.ru\/(#[\w\-+]+)/;
+    var roomUrl = /http\S+rooms\/(#[\w\-+]+)/;
 
     function getValues() {
         var values = {};

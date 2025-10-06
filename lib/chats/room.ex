@@ -9,7 +9,7 @@ defmodule Chats.Room do
   end
 
   @doc """
-  Добавить/Обновить новую комнату
+  Add/Update room
   Key: hash
   Value: %{hash, topic, level, searchable, watched, creator_session_id, created_at}
   """
@@ -19,7 +19,7 @@ defmodule Chats.Room do
   end
 
   @doc """
-  Получить комнату по hash
+  Get room by hash
   """
   def get_by_hash(hash) do
     case :ets.lookup(@table_name, hash) do
@@ -29,7 +29,7 @@ defmodule Chats.Room do
   end
 
   @doc """
-  Список всех комнат
+  List all rooms
   """
   def list do
     @table_name

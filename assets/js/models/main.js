@@ -121,7 +121,7 @@ Me.isHidden = function (data) {
     );
 };
 
-// Talkrooms vesrion
+// rooms vesrion
 (function () {
     var notice;
     var version = 39;
@@ -129,7 +129,7 @@ Me.isHidden = function (data) {
     function showNotice(description) {
         notice = $('<div class="updated-notice"></div>')
             .append(
-                '<div class="updated-title">Вышло обновление Talkrooms. Пожалуйста, <span class="updated-reload">обновите страницу</span>, чтобы сбросить кэш браузера.</div>',
+                '<div class="updated-title">Вышло обновление Rooms. Пожалуйста, <span class="updated-reload">обновите страницу</span>, чтобы сбросить кэш браузера.</div>',
             )
             .append('<div class="updated-text">' + description + "</div>");
         notice.find(".updated-reload").on("click", function () {

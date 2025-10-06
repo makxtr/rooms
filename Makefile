@@ -1,38 +1,37 @@
-# TalkRooms - Phoenix Application Makefile
+# Rooms - Phoenix Application Makefile
 
 .PHONY: help start stop status setup clean logs test dev
 
-# Цвета для вывода
 GREEN=\033[0;32m
 YELLOW=\033[1;33m
 RED=\033[0;31m
 NC=\033[0m # No Color
 
-help: ## Показать справку
-	@echo "$(GREEN)TalkRooms - Phoenix Real-time Chat Application$(NC)"
+help:
+	@echo "$(GREEN)Rooms - Phoenix Real-time Chat Application$(NC)"
 	@echo ""
-	@echo "$(YELLOW)Доступные команды:$(NC)"
+	@echo "$(YELLOW)Commands:$(NC)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-setup: ## Первоначальная настройка проекта
-	@echo "$(YELLOW)Установка зависимостей Phoenix...$(NC)"
+setup:
+	@echo "$(YELLOW)setup Phoenix...$(NC)"
 	mix deps.get
-	@echo "$(GREEN)✅ Настройка завершена!$(NC)"
+	@echo "$(GREEN)✅ Finished!$(NC)"
 
-start: ## Запустить приложение (Phoenix only - without database)
-	@echo "$(GREEN)Запуск Phoenix...$(NC)"
+start:
+	@echo "$(GREEN)Run Phoenix...$(NC)"
 	@nohup mix phx.server > phoenix.log 2>&1 & echo $$! > phoenix.pid
 	@sleep 3
 	@echo ""
-	@echo "$(GREEN)Phoenix запущен!$(NC)"
-	@echo "$(YELLOW)Приложение:$(NC) http://localhost:4000"
+	@echo "$(GREEN)Phoenix started!$(NC)"
+	@echo "$(YELLOW)Application:$(NC) http://localhost:4000"
 	@echo "$(YELLOW)API:$(NC)        http://localhost:4000/api/health"
 
-stop: ## Остановить приложение
-	@echo "$(RED)🛑 Остановка TalkRooms...$(NC)"
+stop:
+	@echo "$(RED)🛑 Stopping Rooms...$(NC)"
 	@echo "$(YELLOW)Phoenix...$(NC)"
 	@if [ -f phoenix.pid ]; then \
-		kill `cat phoenix.pid` 2>/dev/null || echo "Phoenix процесс по PID файлу уже остановлен"; \
+		kill `cat phoenix.pid` 2>/dev/null || echo "Phoenix process PID file already stopped"; \
 		rm -f phoenix.pid; \
 	fi
 	@if lsof -i :4000 >/dev/null 2>&1; then \
@@ -41,40 +40,39 @@ stop: ## Остановить приложение
 			kill $$PHOENIX_PID 2>/dev/null && echo "Phoenix процесс (PID: $$PHOENIX_PID) остановлен" || echo "Не удалось остановить Phoenix процесс"; \
 		fi; \
 	fi
-	@echo "$(GREEN)✅ Приложение остановлено!$(NC)"
+	@echo "$(GREEN)✅ Stopped!$(NC)"
 
 status: ## Проверить статус сервисов
 	@echo "$(YELLOW)Phoenix:$(NC)"
 	@PHOENIX_PID=$$(lsof -i :4000 2>/dev/null | grep beam.smp | grep LISTEN | awk '{print $$2}' | head -1); \
 	if [ -n "$$PHOENIX_PID" ]; then \
-		echo "  ✅ Запущено (PID: $$PHOENIX_PID)"; \
-		curl -s http://localhost:4000/api/health >/dev/null && echo "  ✅ API отвечает" || echo "  ❌ API не отвечает"; \
-		curl -s http://localhost:4000/ >/dev/null && echo "  ✅ Веб-приложение отвечает" || echo "  ❌ Веб-приложение не отвечает"; \
+		echo "  ✅ Running (PID: $$PHOENIX_PID)"; \
+		curl -s http://localhost:4000/api/health >/dev/null && echo "  ✅ API responds" || echo "  ❌ API does not respond"; \
+		curl -s http://localhost:4000/ >/dev/null && echo "  ✅ Web application responds" || echo "  ❌ Web application does not respond"; \
 	else \
-		echo "  ❌ Не запущено"; \
+		echo "  ❌ Not running"; \
 	fi
 
-routes: ## Показать все маршруты приложения
+routes:
 	@echo "$(YELLOW)=== Routes ====$(NC)"
 	@mix phx.routes
 
-logs: ## Показать логи приложения
+logs:
 	@echo "$(YELLOW)=== Phoenix ====$(NC)"
-	@if [ -f phoenix.log ]; then tail -40 phoenix.log; else echo "Логи Phoenix не найдены"; fi
+	@if [ -f phoenix.log ]; then tail -40 phoenix.log; else echo "Logs Phoenix not found"; fi
 
 test: ## Запустить тесты
 	@mix test
 
-clean: stop ## Полная очистка (остановка + удаление логов и PID файлов)
-	@echo "$(RED)🧹 Очистка TalkRooms...$(NC)"
+clean: stop
+	@echo "$(RED)Clearing Rooms...$(NC)"
 	@rm -f phoenix.pid phoenix.log
-	@echo "$(GREEN)✅ Очистка завершена!$(NC)"
+	@echo "$(GREEN)✅ Done!$(NC)"
 
 	#require IEx; IEx.pry()
-debug: ## Запустить приложение в дебаг режиме с IEx консолью
+debug:
 	@iex -S mix phx.server
 
-restart: stop start ## Перезапустить приложение
+restart: stop start
 
-# Установка по умолчанию
 .DEFAULT_GOAL := help

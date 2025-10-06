@@ -10,7 +10,7 @@ defmodule Chats.Message do
   end
 
   @doc """
-  Добавить сообщение в комнату
+  Add message to room
   Key: {room_hash, timestamp}
   Value: %{message_id, room_hash, body, user_id, nickname, timestamp}
   """
@@ -21,7 +21,7 @@ defmodule Chats.Message do
   end
 
   @doc """
-  Получить все сообщения комнаты
+  Get all messages in room
   """
   def all(room_hash) do
     @table_name
@@ -32,7 +32,7 @@ defmodule Chats.Message do
   end
 
   @doc """
-  Получить последние N сообщений комнаты
+  Get last N messages in room
   """
   def last(room_hash, limit \\ 50) do
     @table_name
@@ -44,7 +44,7 @@ defmodule Chats.Message do
   end
 
   @doc """
-  Удалить все сообщения комнаты
+  Delete all messages in room
   """
   def truncate(room_hash) do
     @table_name

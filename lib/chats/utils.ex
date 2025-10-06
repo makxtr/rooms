@@ -31,7 +31,7 @@ defmodule Chats.Utils do
   end
 
   @doc """
-  Generates random nickname for anonymous users
+  Generates random nickname
   """
   def gen_random_nickname do
     adjectives = ["Быстрый", "Умный", "Добрый", "Смелый", "Веселый", "Тихий", "Яркий"]

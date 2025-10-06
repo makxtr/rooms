@@ -7,7 +7,6 @@ defmodule Chats.Application do
 
   @impl true
   def start(_type, _args) do
-    # Инициализируем ETS таблицы
     Chats.Room.init()
     Chats.Message.init()
 

@@ -36,7 +36,7 @@ defmodule Chats.MessageContextTest do
   end
 
   describe "Message.last/2 order" do
-    test "returns messages in correct chronological order" do
+    test "returns messages in correct order" do
       alias Chats.Message
 
       room_hash = Utils.gen_room_hash()

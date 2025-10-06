@@ -1,5 +1,5 @@
 body {
-    background: url('side.png') #EBE9E8;
+    background: url("side.png") #ebe9e8;
 }
 
 #about {
@@ -12,7 +12,7 @@ body {
 
 /* Visible room */
 body.in-rooms {
-    background: #F6F6F6;
+    background: #f6f6f6;
 }
 .in-rooms #about {
     display: none;
@@ -21,7 +21,7 @@ body.in-rooms {
     display: block;
 }
 
-/* Talkrooms update */
+/* rooms update */
 .updated-notice {
     position: absolute;
     z-index: 10;
@@ -30,7 +30,9 @@ body.in-rooms {
     padding: 16px 0;
     width: 100%;
     background: #f5efdc;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2), 0 1px 0 rgba(0, 0, 0, 0.2);
+    box-shadow:
+        0 5px 15px rgba(0, 0, 0, 0.2),
+        0 1px 0 rgba(0, 0, 0, 0.2);
 }
 .updated-title {
     max-width: 920px;
@@ -68,9 +70,9 @@ body.in-rooms {
     align-items: center;
     justify-content: center;
     text-align: center;
-    background: #F8F8F8;
+    background: #f8f8f8;
     font-size: 24px;
     line-height: 28px;
     color: #808080;
-    animation: fade-in .5s ease-out;
+    animation: fade-in 0.5s ease-out;
 }

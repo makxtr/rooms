@@ -7,7 +7,7 @@ defmodule Chats.MessageContext do
   alias Chats.Utils
 
   @doc """
-  Создает новое сообщение в комнате
+  New message in room
   """
   def create(room_hash, user_id, nickname, body) do
     %{
@@ -23,7 +23,7 @@ defmodule Chats.MessageContext do
   end
 
   @doc """
-  Получает историю сообщений комнаты
+  List all messages in room
   """
   def list(room_hash, limit \\ 50) do
     Message.last(room_hash, limit)
@@ -31,7 +31,7 @@ defmodule Chats.MessageContext do
   end
 
   @doc """
-  Форматирует сообщение для отправки клиенту
+  Format message for sending to client
   """
   def format_one(message) do
     %{
@@ -45,14 +45,14 @@ defmodule Chats.MessageContext do
   end
 
   @doc """
-  Форматирует список сообщений для отправки клиенту
+  Format list of messages for sending to client
   """
   def format_list(messages) do
     Enum.map(messages, &format_one/1)
   end
 
   @doc """
-  Удаляет все сообщения комнаты
+  Clear all messages in room
   """
   def clear(room_hash) do
     Message.truncate(room_hash)

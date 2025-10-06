@@ -1,6 +1,6 @@
 defmodule Chats.SessionContext do
   @moduledoc """
-  Business logic for session management
+  Session management
   """
   alias Chats.Session
 

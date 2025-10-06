@@ -112,7 +112,6 @@ Talk.format = function (content) {
         s = s.replace(/(^|\s)_(\W|\W+\S)_/g, "$1<em>$2</em>");
     }
     if (~s.indexOf("http")) {
-        s = s.replace(/\bhttp\S+talkrooms.ru\/(#[\w\-+]+)\b/g, "$1");
         s = s.replace(
             /\b(http\S+[^.,)?!\s])/g,
             '<a href="$1" target="_blank">$1</a>',
