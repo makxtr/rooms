@@ -412,9 +412,8 @@ Talk.format = function (content) {
 
     function getMessages(conditions) {
         var options = {
-            room_id: Room.data.room_id,
-            order_by: { "-desc": "message_id" },
-            for_me: Talk.forMeOnly ? 1 : 0,
+            room_hash: Room.hash,
+            limit: 50,
         };
         if (conditions) {
             $.extend(options, conditions);
@@ -500,11 +499,12 @@ Talk.format = function (content) {
     }
 
     Talk.loadRecent = function () {
-        // Не загружаем сообщения через REST API
-        // Они приходят через Phoenix Channel при join
-        showRecent([]);
-        Talk.content.removeClass("talk-loading");
-        return $.Deferred().resolve([]);
+        return getMessages()
+            .then(useIgnores)
+            .done(showRecent)
+            .fail(function () {
+                showRecent([]);
+            });
     };
 
     Talk.updateIgnore = function (ignore) {

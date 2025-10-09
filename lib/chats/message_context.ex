@@ -38,9 +38,11 @@ defmodule Chats.MessageContext do
       message_id: message.message_id,
       room_hash: message.room_hash,
       body: message.body,
+      content: message.body,
       user_id: message.user_id,
       nickname: message.nickname,
-      timestamp: DateTime.to_iso8601(message.timestamp)
+      timestamp: DateTime.to_iso8601(message.timestamp),
+      created: DateTime.to_iso8601(message.timestamp)
     }
   end
 

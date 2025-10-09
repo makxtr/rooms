@@ -1,44 +1,35 @@
 defmodule ChatsWeb.MessageController do
   use ChatsWeb, :controller
+  alias Chats.MessageContext
 
-  def index(conn, _params) do
-    # Заглушка для получения сообщений
-    messages = [
-      %{
-        message_id: 1,
-        room_id: 1,
-        user_id: "user_1",
-        nickname: "User1",
-        content: "Hello, world!",
-        created: DateTime.utc_now() |> DateTime.to_iso8601(),
-        recipient_user_id: nil
-      },
-      %{
-        message_id: 2,
-        room_id: 1,
-        user_id: "user_2",
-        nickname: "User2",
-        content: "Hi there!",
-        created: DateTime.utc_now() |> DateTime.to_iso8601(),
-        recipient_user_id: nil
-      }
-    ]
+  @doc """
+  GET /api/messages?room_hash=abc&limit=50
+  Load messages from a room
+  """
+  def index(conn, params) do
+    room_hash = Map.get(params, "room_hash")
+    limit = Map.get(params, "limit", "50") |> String.to_integer()
 
-    json(conn, messages)
+    cond do
+      is_nil(room_hash) || room_hash == "" ->
+        conn
+        |> put_status(:bad_request)
+        |> json(%{error: "room_hash is required"})
+
+      true ->
+        # Load messages
+        messages = MessageContext.list(room_hash, limit)
+        json(conn, messages)
+    end
   end
 
-  def create(conn, params) do
-    # Заглушка для отправки нового сообщения
-    message_data = %{
-      message_id: :rand.uniform(10000),
-      room_id: params["room_id"] || 1,
-      user_id: params["user_id"] || "user_1",
-      nickname: "TestUser",
-      content: params["content"] || "New message",
-      created: DateTime.utc_now() |> DateTime.to_iso8601(),
-      recipient_user_id: params["recipient_user_id"]
-    }
-
-    json(conn, message_data)
+  @doc """
+  POST /api/messages - Create message (legacy, не используется)
+  Сообщения отправляются через WebSocket
+  """
+  def create(conn, _params) do
+    conn
+    |> put_status(:not_implemented)
+    |> json(%{error: "Use WebSocket to send messages"})
   end
 end

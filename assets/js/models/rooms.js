@@ -543,6 +543,7 @@ var Room = new Events();
 // Emulate old enter event
 Rooms.on("selected.ready", function (selected) {
     Room.data = selected.data;
+    Room.hash = selected.hash || selected.data?.hash;
     Room.myRole = selected.myRole;
     Room.moderator = selected.myRole.isModerator;
     Room.trigger("enter", selected);

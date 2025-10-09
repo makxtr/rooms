@@ -28,8 +28,7 @@ defmodule ChatsWeb.RoomChannel do
        status: "joined",
        room_hash: room_hash,
        user_id: user_id,
-       nickname: nickname,
-       messages: MessageContext.list(room_hash)
+       nickname: nickname
      }, socket}
   end
 

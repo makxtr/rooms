@@ -203,70 +203,75 @@ HTTP 404
 
 ### 8. Loading Messages
 
-**User Action:** Room opened OR scroll to top OR date selected
-
-**API Request:**
-```
-GET /api/messages?room_id=123&before_id=999&limit=50
-Response: {
-  messages: [
-    {
-      message_id: 998,
-      user_id: 456,
-      nickname: "User",
-      text: "Hello",
-      created: "2024-01-01T12:00:00Z",
-      mentions: [],
-      recipient_user_id: null,
-      ...
-    },
-    ...
-  ],
-  has_more: true
-}
-```
-
 **Load scenarios:**
-1. **Initial load** - Loads last 50 messages
-2. **Load older** - User scrolls to top, loads previous 50
-3. **Date picker** - User selects date, loads messages from that date
+
+1. **Initial load** - Room entered
+   - Messages loaded via **REST API** after joining channel
+   - Separate API call: `GET /api/messages?room_hash=abc&limit=50`
+   - Returns last 50 messages in ascending order (oldest first)
+   - Code: `talk.js:501` - `Talk.loadRecent()`
+
+2. **Load older messages** - User scrolls to top (currently uses legacy code)
+   - **REST API Request:**
+   ```
+   GET /api/messages?room_id=123&before_id=999&limit=150
+   Response: [
+     {
+       message_id: 998,
+       user_id: 456,
+       nickname: "User",
+       content: "Hello",
+       created: "2024-01-01T12:00:00Z",
+       recipient_user_id: null,
+       ...
+     },
+     ...
+   ]
+   ```
+   - Called via `Rest.messages.get()` in `talk.js:422`
+
+3. **Date picker** - User selects specific date
+   - **REST API Request:**
+   ```
+   GET /api/messages?room_id=123&created[>]=2024-01-01T00:00:00Z&limit=150
+   ```
+   - Loads messages from selected date forward
 
 ### 9. Sending Message
 
 **User Action:** Type message and press Enter
 
-**API Request:**
-```
-POST /api/messages
-Body: {
-  room_id: 123,
-  text: "Hello world",
-  recipient_user_id: null
-}
-Response: {
-  message_id: 1001,
-  user_id: 456,
-  nickname: "User",
-  text: "Hello world",
-  created: "2024-01-01T12:01:00Z",
-  ...
-}
+**WebSocket Request:**
+```javascript
+// Client sends via Phoenix Channel
+PhoenixSocket.sendMessage("Hello world")
+// Internally calls:
+currentChannel.push("new_message", { body: "Hello world" })
 ```
 
 **What happens:**
-1. Message sent via REST API
-2. Backend broadcasts to all room members via WebSocket
-3. All connected clients receive `new_message` event
-4. Message appears in chat instantly via WebSocket
+1. Message sent via **WebSocket** channel push (`user_socket.js:134`)
+2. Server receives, saves to DB, and broadcasts to all room members
+3. All connected clients receive `new_message` event via WebSocket
+4. Message appears in chat instantly for all users
 
-**WebSocket Event Received:**
+**WebSocket Event Received by all clients:**
 ```javascript
-// All clients in room receive:
 {
   event: "new_message",
-  payload: { message_id: 1001, user_id: 456, text: "Hello", ... }
+  payload: {
+    message_id: 1001,
+    user_id: 456,
+    nickname: "User",
+    body: "Hello world",
+    timestamp: "2024-01-01T12:01:00Z"
+  }
 }
 ```
+
+**Code references:**
+- Send: `reply.js:80` → `user_socket.js:130-138`
+- Receive: `user_socket.js:67-79` → `room.js` (via events)
 
 ### 10. Real-Time Events (WebSocket)
 
@@ -327,20 +332,16 @@ Response: { nickname: "NewName", status: "NewStatus", ... }
 
 **User Action:** Click username → Send private message
 
-**API Request:**
-```
-POST /api/messages
-Body: {
-  room_id: 123,
-  text: "@User Hello privately",
-  recipient_user_id: 456
-}
-```
+**Implementation:**
+- Private messages sent via **WebSocket** (same as regular messages)
+- UI shows reply form with recipient indicator
+- Message text may include mentions like "@User Hello"
 
 **What happens:**
-1. Message sent with `recipient_user_id` set
-2. Only sender and recipient see message highlighted
-3. Others see regular message (if text contains mention)
+1. Message sent via WebSocket `new_message` event
+2. Server handles recipient logic (currently in development)
+3. UI highlights private messages differently for sender/recipient
+4. Code: `reply.js:264` - `Room.replyPrivate()`
 
 ### 13. Leaving Room
 
@@ -390,10 +391,73 @@ Body: { level: 30 }
 - Automatically included in all API requests
 - Required for authentication
 
-### Real-Time vs REST
-- **REST API** - Initial data load, actions (create, update, delete)
-- **WebSocket** - Real-time updates, presence, live messages
-- Both required for full functionality
+### Hybrid Architecture: REST + WebSocket
+
+**Client maintains TWO simultaneous connections:**
+
+1. **HTTP REST API** (`$.Rest()` via jQuery AJAX)
+   - Used for: CRUD operations, one-time requests, data fetching
+   - Stateless, request-response pattern
+   - Session auth via cookies (`_chats_key`)
+
+2. **WebSocket** (Phoenix Channels via `user_socket.js`)
+   - Used for: Real-time bidirectional communication
+   - Persistent connection, stays open entire session
+   - Push notifications from server to client
+
+**Why both?**
+- REST is efficient for standard operations (no need to hold WebSocket)
+- WebSocket enables instant updates without polling
+- Separation of concerns: data operations vs real-time events
+
+**Typical User Flow:**
+```
+1. Open page
+   → HTTP GET /api/sessions/me (get user data)
+
+2. Navigate to room
+   → HTTP POST /api/rooms/:hash/enter (join room, get room data)
+   → WebSocket joinRoom(roomId) (subscribe to real-time events)
+   → HTTP GET /api/messages?room_hash=abc&limit=50 (load recent messages)
+
+3. User scrolls up to load older messages (future feature)
+   → HTTP GET /api/messages?room_hash=abc&before=timestamp&limit=150
+
+4. Send message
+   → WebSocket push "new_message" (send message via channel)
+   → Server saves to DB and broadcasts to all clients in room
+   → All users receive message instantly via WebSocket
+
+5. Another user joins room
+   → WebSocket "presence_diff" event (instant notification to all)
+
+6. Update profile
+   → HTTP PATCH /api/sessions/me (update in DB)
+   → Server broadcasts via WebSocket "user_updated" to all rooms
+```
+
+**Connection lifecycle:**
+- WebSocket connects once on app.js load: `socket.connect()`
+- HTTP requests made as needed throughout session
+- Both share same session cookie for authentication
+- WebSocket reconnects automatically on disconnect
+
+**Data flow patterns:**
+
+| Operation | Method | Reason |
+|-----------|--------|--------|
+| Get session info | REST | One-time data fetch on page load |
+| Get room info | REST | Room metadata and permissions |
+| Join room | REST + WS | REST for auth/data, WS for real-time channel |
+| Initial messages | WebSocket | Sent by server on channel join |
+| Load older messages | REST | Paginated historical data (scroll up) |
+| Send message | WebSocket | Real-time delivery to all users |
+| Receive message | WebSocket | Real-time broadcast to all |
+| User presence | WebSocket | Live online/offline status |
+| Update profile | REST | Persist changes to DB |
+| Show profile change | WebSocket | Notify all rooms instantly |
+| Edit message | REST | Update in DB with validation |
+| Delete message | REST | Moderation action |
 
 ### Room States
 - `null` - Not entered yet

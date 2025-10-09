@@ -83,19 +83,7 @@ const PhoenixSocket = {
             .join()
             .receive("ok", (resp) => {
                 // Room joined successfully
-                // Load message history if provided
-                if (resp.messages && window.Room) {
-                    resp.messages.forEach((msg) => {
-                        window.Room.trigger("message.loaded", {
-                            message_id: msg.message_id,
-                            body: msg.body,
-                            user_id: msg.user_id,
-                            nickname: msg.nickname,
-                            created: msg.timestamp,
-                            content: msg.body,
-                        });
-                    });
-                }
+                console.log("Joined room:", resp.room_hash);
             })
             .receive("error", (resp) => {
                 console.error("Failed to join room:", resp);

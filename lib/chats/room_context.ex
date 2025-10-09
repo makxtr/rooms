@@ -34,7 +34,7 @@ defmodule Chats.RoomContext do
       id: Utils.gen_id_from_hash(hash),
       hash: hash,
       topic: topic,
-      # 0=открытая, 20=приватная
+      # 0=open, 20=private
       level: attrs["level"] || 0,
       searchable: Map.get(attrs, "searchable", true),
       watched: Map.get(attrs, "watched", false),
