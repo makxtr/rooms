@@ -107,6 +107,13 @@
                 .catch(function (error) {
                     // Room re-enter failed
                 });
+        } else if (room.state === "ready") {
+            if (window.PhoenixSocket && room.data.hash) {
+                window.PhoenixSocket.joinRoom(room.data.hash, {
+                    nickname: room.myRole?.nickname,
+                    user_id: room.myRole?.user_id || room.myRole?.session_id,
+                });
+            }
         }
 
         if (room.unread) {

@@ -550,6 +550,7 @@ Talk.format = function (content) {
     });
 
     Rooms.on("select", function () {
+        Talk.reset();
         Talk.content.addClass("talk-loading");
     });
 
