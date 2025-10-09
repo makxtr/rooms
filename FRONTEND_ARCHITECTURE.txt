@@ -1,4 +1,4 @@
-# Chats - Frontend Architecture
+# Chats - Frontend Architecture & Behavior
 
 ## Structure
 ```
@@ -30,44 +30,6 @@ assets/
 │       └── datepicker.js   # Calendar
 └── css/
     └── app.css             # Single CSS bundle
-
-lib/chats_web/
-├── components/layouts/
-│   └── root.html.heex      # Root layout (CSS/JS includes)
-└── controllers/page_html/
-    └── home.html.heex      # HTML markup (#about, #rooms)
-```
-
-## Architecture
-
-**Type:** Vanilla JavaScript SPA + Phoenix backend
-**Routing:** Hash-based (#/room/abc123)
-**Communication:** WebSocket (real-time) + REST API
-
-### Loading flow:
-1. `app.js` loads jQuery from CDN
-2. Sequential module imports: utility → events → rest → models → views → user_socket
-3. FastClick initialization for mobile devices
-
-### Global objects:
-- `Events` - event system
-- `Template` - template engine
-- `Router` - hash routing
-- `Rest` - REST API client
-- `Me` - current session
-- `Socket` - WebSocket connection
-- `Rooms` - rooms management
-- `$window`, `$document` - jQuery wrappers
-
-### API Endpoints:
-```
-GET  /api/health          # Health check
-GET  /api/sessions/me     # Current session
-GET  /api/rooms/:hash     # Room data
-POST /api/rooms           # Create room
-GET  /api/messages        # Message history
-POST /api/messages        # Send message
-POST /api/sockets         # WebSocket connection
 ```
 
 ## Tech Stack
@@ -83,10 +45,368 @@ POST /api/sockets         # WebSocket connection
 - Phoenix Framework (Elixir)
 - HEEX templates (server-side rendering)
 
-## Features
+## Application Flow
 
-- Event-driven architecture
-- Async module loading via `import()`
-- Component communication via event system
-- Real-time via WebSocket
-- Progressive enhancement (HTML works without JS)
+### 1. Initial Page Load
+
+**URL:** `http://localhost:4000/`
+
+**What happens:**
+1. Phoenix serves `root.html.heex` with `home.html.heex` content
+2. Browser loads CSS and executes `app.js`
+3. `app.js` dynamically imports all modules sequentially
+4. After modules loaded, app fetches current session
+
+**API Request:**
+```
+GET /api/sessions/me
+Response: {
+  session_id: "abc123",
+  nickname: "User",
+  status: "Hello",
+  rand_nickname: true,
+  user_id: null,
+  provider_id: null,
+  ignores: [[], {}],
+  subscriptions: [],
+  rooms: [],
+  recent_rooms: [],
+  talkrooms: { version: 39, whatsnew: "..." }
+}
+```
+
+**Result:**
+- `Me` object populated with session data
+- Hash router checks URL and routes to appropriate view
+- If hash is empty (`#`), shows hall (About page)
+
+### 2. Entering Hall (Explore Mode)
+
+**URL:** `http://localhost:4000/#` or `http://localhost:4000/#+`
+
+**What happens:**
+1. Router matches `/^$|^\+$/` patterns
+2. Triggers `Rooms.explore()` or `Rooms.enter() + Rooms.explore()`
+3. Shows `.hall` element with room lists
+
+**UI Shows:**
+- Recent rooms list (from `Me.recent_rooms`)
+- My rooms list (from `Me.rooms`)
+- Create room button
+- Shuffle (random room) button
+
+**No API calls** - uses data from `/api/sessions/me`
+
+### 3. Creating New Room
+
+**User Action:** Click "Create room" button
+
+**API Request:**
+```
+POST /api/rooms
+Response: { hash: "xyz789", topic: "#xyz789", ... }
+```
+
+**What happens:**
+1. `Rooms.create()` called
+2. POST request creates new room
+3. Router redirects to `#xyz789`
+4. Triggers room enter flow (see below)
+
+### 4. Shuffle (Random Room)
+
+**User Action:** Click shuffle button
+
+**API Request:**
+```
+POST /api/rooms/search
+Response: { hash: "random123", topic: "#random123", ... }
+```
+
+**What happens:**
+1. `Rooms.shuffle()` called
+2. Backend finds available room to join
+3. Router redirects to `#random123`
+4. Triggers room enter flow
+
+**On Error (404):**
+- Shows "No rooms available" message
+- User stays in hall
+
+### 5. Entering Room
+
+**URL:** `http://localhost:4000/#roomhash`
+
+**What happens:**
+1. Router matches `/^[\w\-+]{3,}$/` pattern
+2. Calls `Rooms.select(hash)`
+3. If room not in `Rooms.byHash`, creates new Room object
+4. Calls `room.enter()`
+
+**API Request:**
+```
+POST /api/rooms/:hash/enter
+Response: {
+  room: { room_id: 123, hash: "roomhash", topic: "Room Name", level: 0, ... },
+  role: { user_id: 456, nickname: "User", status: "Hello", level: 0, ... },
+  subscription: { subscription_id: 789, ... },
+  roles_online: [{ user_id: 1, nickname: "User1", ... }, ...],
+  roles_waiting: []
+}
+```
+
+**What happens after successful enter:**
+1. Room state set to "ready"
+2. `Rooms.selected` = current room
+3. Phoenix Channel joined: `room:roomhash`
+4. Triggers `Rooms.on("selected.ready")` event
+5. UI switches from hall to room view
+
+**WebSocket Connection:**
+- Joins Phoenix channel `room:roomhash`
+- Sends join params: `{ nickname, user_id }`
+- Listens for real-time events
+
+### 6. Room Denied/Locked (403)
+
+**API Response:**
+```
+HTTP 403
+{
+  room: { level: 50, ... },
+  role: { level: 0, banned_until: "2024-01-01", ... }
+}
+```
+
+**What happens:**
+1. Room state set to "locked" or "closed"
+2. Triggers `Rooms.on("selected.denied")` event
+3. Shows lock/ban screen instead of chat
+4. User cannot send messages
+
+**Cases:**
+- `level: 80` - Room closed (deleted by admin)
+- `level: 50` + user banned - Shows ban duration
+- `level: 10` + user level < 10 - Room is private
+
+### 7. Room Not Found (404)
+
+**API Response:**
+```
+HTTP 404
+```
+
+**What happens:**
+1. Room state set to "lost" or "deleted"
+2. Shows "Room not found" message
+3. Suggests creating new room or returning to hall
+
+### 8. Loading Messages
+
+**User Action:** Room opened OR scroll to top OR date selected
+
+**API Request:**
+```
+GET /api/messages?room_id=123&before_id=999&limit=50
+Response: {
+  messages: [
+    {
+      message_id: 998,
+      user_id: 456,
+      nickname: "User",
+      text: "Hello",
+      created: "2024-01-01T12:00:00Z",
+      mentions: [],
+      recipient_user_id: null,
+      ...
+    },
+    ...
+  ],
+  has_more: true
+}
+```
+
+**Load scenarios:**
+1. **Initial load** - Loads last 50 messages
+2. **Load older** - User scrolls to top, loads previous 50
+3. **Date picker** - User selects date, loads messages from that date
+
+### 9. Sending Message
+
+**User Action:** Type message and press Enter
+
+**API Request:**
+```
+POST /api/messages
+Body: {
+  room_id: 123,
+  text: "Hello world",
+  recipient_user_id: null
+}
+Response: {
+  message_id: 1001,
+  user_id: 456,
+  nickname: "User",
+  text: "Hello world",
+  created: "2024-01-01T12:01:00Z",
+  ...
+}
+```
+
+**What happens:**
+1. Message sent via REST API
+2. Backend broadcasts to all room members via WebSocket
+3. All connected clients receive `new_message` event
+4. Message appears in chat instantly via WebSocket
+
+**WebSocket Event Received:**
+```javascript
+// All clients in room receive:
+{
+  event: "new_message",
+  payload: { message_id: 1001, user_id: 456, text: "Hello", ... }
+}
+```
+
+### 10. Real-Time Events (WebSocket)
+
+**Connected to:** `ws://localhost:4000/sockets` → Channel `room:roomhash`
+
+**Events received:**
+
+1. **new_message** - New message in room
+```javascript
+{ message_id: 1001, user_id: 456, text: "Hello", ... }
+```
+
+2. **presence_state** - Initial online users list
+```javascript
+{ "user_123": { metas: [{ nickname: "User", status: "...", ... }] } }
+```
+
+3. **presence_diff** - User joined/left
+```javascript
+{
+  joins: { "user_456": { metas: [...] } },
+  leaves: { "user_789": { metas: [...] } }
+}
+```
+
+4. **message_deleted** - Message removed
+```javascript
+{ message_id: 998 }
+```
+
+5. **user_updated** - User changed nickname/status
+```javascript
+{ user_id: 456, nickname: "NewName", status: "NewStatus" }
+```
+
+6. **room_updated** - Room settings changed
+```javascript
+{ topic: "New Topic", level: 10, ... }
+```
+
+### 11. Updating Profile
+
+**User Action:** Open profile modal, change nickname/status
+
+**API Request:**
+```
+PATCH /api/sessions/me
+Body: { nickname: "NewName", status: "NewStatus" }
+Response: { nickname: "NewName", status: "NewStatus", ... }
+```
+
+**What happens:**
+1. Profile updated in database
+2. Backend broadcasts `user_updated` via WebSocket to all rooms
+3. All clients update user display in online lists and messages
+
+### 12. Private Messages
+
+**User Action:** Click username → Send private message
+
+**API Request:**
+```
+POST /api/messages
+Body: {
+  room_id: 123,
+  text: "@User Hello privately",
+  recipient_user_id: 456
+}
+```
+
+**What happens:**
+1. Message sent with `recipient_user_id` set
+2. Only sender and recipient see message highlighted
+3. Others see regular message (if text contains mention)
+
+### 13. Leaving Room
+
+**User Action:** Click "Back to hall" OR navigate to `#` OR close tab
+
+**What happens:**
+1. `room.leave()` called
+2. Phoenix Channel left
+3. UI switches back to hall
+4. WebSocket disconnects from room channel
+
+**No API call** - just local cleanup
+
+### 14. Moderation Actions (Level ≥ 50)
+
+**Available when:** `room.myRole.level >= 50`
+
+**Actions:**
+
+1. **Delete message**
+```
+DELETE /api/messages/:id
+```
+
+2. **Ban user**
+```
+PATCH /api/rooms/:hash/roles/:user_id
+Body: { banned_until: "2024-01-31T23:59:59Z" }
+```
+
+3. **Change user level**
+```
+PATCH /api/rooms/:hash/roles/:user_id
+Body: { level: 30 }
+```
+
+## Important Notes
+
+### CORS Requirements
+- Frontend must be served from same origin as backend OR
+- CORS must be configured if frontend on different port
+- `127.0.0.1:4000` and `localhost:4000` are **different origins**
+- Use `localhost:4000` consistently
+
+### Session Management
+- Session stored in cookie `_chats_key`
+- Automatically included in all API requests
+- Required for authentication
+
+### Real-Time vs REST
+- **REST API** - Initial data load, actions (create, update, delete)
+- **WebSocket** - Real-time updates, presence, live messages
+- Both required for full functionality
+
+### Room States
+- `null` - Not entered yet
+- `"ready"` - Successfully entered, can chat
+- `"locked"` - Access denied (banned or insufficient level)
+- `"closed"` - Room deleted/closed
+- `"lost"` - Room not found (404)
+- `"deleted"` - Room was deleted
+- `"error"` - Server error
+
+### Message Visibility
+Messages filtered based on:
+- User ignore list (`Me.ignores`)
+- Private message recipient (`recipient_user_id`)
+- Filter mode (all messages / mentions only)
+- Moderator status (moderators see all)
