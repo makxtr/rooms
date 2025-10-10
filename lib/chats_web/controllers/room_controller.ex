@@ -64,6 +64,14 @@ defmodule ChatsWeb.RoomController do
     case RoomContext.fetch_room_by_hash(hash) do
       {:ok, room} ->
         updated_room = RoomContext.update_room(room, params)
+
+        ChatsWeb.Endpoint.broadcast("room:#{hash}", "room_updated", %{
+          topic: updated_room.topic,
+          watched: updated_room.watched,
+          level: updated_room.level,
+          searchable: updated_room.searchable
+        })
+
         json(conn, RoomContext.format_room_response(updated_room))
 
       {:error, :not_found} ->

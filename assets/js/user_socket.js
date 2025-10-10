@@ -66,6 +66,23 @@ const PhoenixSocket = {
             }
         });
 
+        currentChannel.on("room_updated", (payload) => {
+            if (!window.Rooms?.selected) return;
+
+            const room = window.Rooms.selected;
+            const fields = ["topic", "watched", "level", "searchable"];
+
+            fields.forEach((field) => {
+                if (payload[field] !== undefined) {
+                    room.data[field] = payload[field];
+                    window.Rooms.triggerSelected(
+                        `selected.${field}.updated`,
+                        room,
+                    );
+                }
+            });
+        });
+
         currentChannel
             .join()
             .receive("ok", (resp) => {
