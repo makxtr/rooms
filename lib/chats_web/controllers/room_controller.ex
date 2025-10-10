@@ -63,7 +63,7 @@ defmodule ChatsWeb.RoomController do
   def update(conn, %{"hash" => hash} = params) do
     case RoomContext.fetch_room_by_hash(hash) do
       {:ok, room} ->
-        {:ok, updated_room} = RoomContext.update_room(room, params)
+        updated_room = RoomContext.update_room(room, params)
         json(conn, RoomContext.format_room_response(updated_room))
 
       {:error, :not_found} ->

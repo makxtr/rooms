@@ -1,33 +1,25 @@
-// Bring in Phoenix channels client library:
 import { Socket, Presence } from "phoenix";
 
 let socket = new Socket("/sockets", { params: { token: "test_token" } });
 socket.connect();
 
-// Store current room channel and presence
 let currentChannel = null;
 let presenceState = {};
 
-// Единая точка получения user_id
 function getUserId(userParams = {}) {
     return userParams.user_id || window.Me?.session_id || null;
 }
 
-// Phoenix socket interface for the app
 const PhoenixSocket = {
     socket,
 
-    // Join a room channel
     joinRoom(roomId, userParams = {}) {
-        // Leave current room if exists
         if (currentChannel) {
             currentChannel.leave();
         }
 
-        // Reset presence state
         presenceState = {};
 
-        // Join new room
         currentChannel = socket.channel(`room:${roomId}`, {
             nickname: userParams.nickname || window.Me?.nickname || "Гость",
             user_id: getUserId(userParams),
@@ -45,27 +37,22 @@ const PhoenixSocket = {
                 return user;
             });
 
-            // Trigger custom event for the app
             if (window.Rooms && window.Rooms.selected) {
                 window.Rooms.trigger("presence.sync", presences);
             }
         }
 
-        // Handle initial presence state from server
         currentChannel.on("presence_state", (state) => {
             presenceState = Presence.syncState(presenceState, state);
             updatePresences();
         });
 
-        // Handle presence diffs
         currentChannel.on("presence_diff", (diff) => {
             presenceState = Presence.syncDiff(presenceState, diff);
             updatePresences();
         });
 
-        // Handle new messages from other users
         currentChannel.on("new_message", (message) => {
-            // Trigger event for the app to handle
             if (window.Room) {
                 const messageData = {
                     message_id: message.message_id,
@@ -82,7 +69,6 @@ const PhoenixSocket = {
         currentChannel
             .join()
             .receive("ok", (resp) => {
-                // Room joined successfully
                 console.log("Joined room:", resp.room_hash);
             })
             .receive("error", (resp) => {
@@ -92,7 +78,6 @@ const PhoenixSocket = {
         return currentChannel;
     },
 
-    // Leave current room
     leaveRoom() {
         if (currentChannel) {
             currentChannel.leave();
@@ -101,7 +86,6 @@ const PhoenixSocket = {
         }
     },
 
-    // Get current channel
     getCurrentChannel() {
         return currentChannel;
     },

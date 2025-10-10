@@ -77,21 +77,15 @@ defmodule Chats.RoomContext do
   Updates a room
   """
   def update_room(room, attrs) do
-    case Room.get_by_hash(room.hash) do
-      nil ->
-        {:error, :not_found}
+    updated_room = %{
+      room
+      | topic: attrs["topic"] || room.topic,
+        level: attrs["level"] || room.level,
+        searchable: Map.get(attrs, "searchable", room.searchable),
+        watched: Map.get(attrs, "watched", room.watched)
+    }
 
-      room ->
-        updated_room = %{
-          room
-          | topic: attrs["topic"] || room.topic,
-            level: attrs["level"] || room.level,
-            searchable: Map.get(attrs, "searchable", room.searchable),
-            watched: Map.get(attrs, "watched", room.watched)
-        }
-
-        Room.insert(updated_room)
-    end
+    Room.insert(updated_room)
   end
 
   @doc """
