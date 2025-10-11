@@ -1,13 +1,12 @@
 // Userpics composer
-(function() {
-
-    var ctx = document.createElement('canvas').getContext('2d');
+(function () {
+    var ctx = document.createElement("canvas").getContext("2d");
     ctx.canvas.width = 80;
     ctx.canvas.height = 80;
 
-    ctx.strokeStyle = '#FFFFFF';
+    ctx.strokeStyle = "#FFFFFF";
     ctx.lineWidth = 4;
-    ctx.lineCap = 'square';
+    ctx.lineCap = "square";
 
     var COLORS = [
         ["#d15a4f", "#e0b9b5", 9, 4, 13],
@@ -25,7 +24,7 @@
         ["#996dc4", "#c6b3d8", 5, 14, 10],
         ["#b569bc", "#d1b3d3", 6, 15, 11],
         ["#c466a4", "#ddb8d1", 7, 1, 12],
-        ["#d15c7f", "#e5bcc8", 8, 3, 12]
+        ["#d15c7f", "#e5bcc8", 8, 3, 12],
     ];
 
     function fillTo(y, color) {
@@ -52,7 +51,7 @@
         ctx.beginPath();
         ctx.arc(40 - offset, top, radius, 0, Math.PI * 2);
         ctx.arc(40 + offset, top, radius, 0, Math.PI * 2);
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = "#FFFFFF";
         ctx.fill();
     }
 
@@ -82,7 +81,7 @@
     }
 
     function bytes(hash, start, length) {
-        return hash << start >>> 32 - (length || 1);
+        return (hash << start) >>> (32 - (length || 1));
     }
 
     function getAuxColor(color, index, shade) {
@@ -97,12 +96,11 @@
         return [
             color[shade],
             getAuxColor(color, aux1, shade),
-            getAuxColor(color, aux2 !== aux1 ? aux2 : 3, shade)
+            getAuxColor(color, aux2 !== aux1 ? aux2 : 3, shade),
         ];
     }
 
     function renderFace(hash) {
-
         var colors = getColors(hash);
 
         ctx.fillStyle = colors[0];
@@ -125,25 +123,36 @@
         drawMouth(mt, mb, colors[2]);
 
         return ctx.canvas.toDataURL();
+    }
 
+    function stringToHash(str) {
+        // Convert string to numeric hash
+        var hash = 0;
+        if (!str || str.length === 0) return hash;
+
+        for (var i = 0; i < str.length; i++) {
+            var char = str.charCodeAt(i);
+            hash = (hash << 5) - hash + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash);
     }
 
     function createUserpic(id) {
-        return renderFace(id * 2654435761); // Knuth's multiplicative hash
+        // If id is a string, convert it to a hash number
+        var numericId = typeof id === "string" ? stringToHash(id) : id;
+        return renderFace(numericId * 2654435761); // Knuth's multiplicative hash
     }
 
     var cached = {};
 
     window.Userpics = {
-
         create: createUserpic,
 
-        getUrl: function(data) {
-            if (data.userpic) return '/userpics/' + data.userpic;
+        getUrl: function (data) {
+            if (data.userpic) return "/userpics/" + data.userpic;
             var id = data.session_id || data.user_id;
             return cached[id] || (cached[id] = createUserpic(id));
-        }
-
+        },
     };
-
 })();
