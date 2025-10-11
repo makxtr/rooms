@@ -76,16 +76,41 @@
     function send() {
         var content = field.val().trim();
         if (content) {
-            if (window.PhoenixSocket) {
-                window.PhoenixSocket.sendMessage(content)
-                    .then(function (msg) {
-                        $warning.hide();
-                    })
-                    .catch(function (err) {
-                        console.error("Failed to send message:", err);
-                        $warning.show();
-                    });
+            // Get room hash from current room
+            var roomHash = window.Rooms?.selected?.data?.hash;
+            var userId =
+                window.Rooms?.selected?.myRole?.session_id ||
+                window.Rooms?.selected?.myRole?.user_id;
+            var nickname =
+                window.Rooms?.selected?.myRole?.nickname ||
+                window.Me?.nickname ||
+                "Guest";
+
+            if (!roomHash || !userId) {
+                console.error("Missing room or user data", {
+                    roomHash: roomHash,
+                    userId: userId,
+                    nickname: nickname,
+                    selected: window.Rooms?.selected,
+                });
+                $warning.show();
+                return;
             }
+
+            Rest.messages
+                .create({
+                    room_hash: roomHash,
+                    user_id: userId,
+                    nickname: nickname,
+                    body: content,
+                })
+                .done(function (msg) {
+                    $warning.hide();
+                })
+                .fail(function (err) {
+                    console.error("Failed to send message:", err);
+                    $warning.show();
+                });
 
             field.val("");
             if (recipient) {

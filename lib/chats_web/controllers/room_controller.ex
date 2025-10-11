@@ -5,7 +5,7 @@ defmodule ChatsWeb.RoomController do
   alias Chats.SessionContext
 
   @doc """
-  GET /api/rooms/:hash - получить данные комнаты
+  GET /api/rooms/:hash
   """
   def show(conn, %{"hash" => hash}) do
     case RoomContext.fetch_room_by_hash(hash) do
@@ -22,7 +22,7 @@ defmodule ChatsWeb.RoomController do
   end
 
   @doc """
-  POST /api/rooms - создать новую комнату
+  POST /api/rooms
   """
   def create(conn, params) do
     params_with_creator =
@@ -40,7 +40,7 @@ defmodule ChatsWeb.RoomController do
   end
 
   @doc """
-  POST /api/rooms/:hash/enter - войти в комнату
+  POST /api/rooms/:hash/enter
   """
   def enter(conn, %{"hash" => hash} = _params) do
     room =
@@ -58,7 +58,7 @@ defmodule ChatsWeb.RoomController do
   end
 
   @doc """
-  PATCH /api/rooms/:hash - обновить комнату
+  PATCH /api/rooms/:hash
   """
   def update(conn, %{"hash" => hash} = params) do
     case RoomContext.fetch_room_by_hash(hash) do
@@ -82,12 +82,11 @@ defmodule ChatsWeb.RoomController do
   end
 
   @doc """
-  POST /api/rooms/search - найти случайную комнату
+  POST /api/rooms/search
   """
   def search(conn, _params) do
     case RoomContext.get_random_room() do
       nil ->
-        # Если нет комнат, создаем дефолтную
         room = RoomContext.find_or_create_room("general", %{"topic" => "Общий чат"})
         json(conn, RoomContext.format_room_response(room))
 

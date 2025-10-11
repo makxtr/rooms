@@ -1,7 +1,6 @@
 defmodule ChatsWeb.RoomChannel do
   use ChatsWeb, :channel
   alias ChatsWeb.Presence
-  alias Chats.MessageContext
 
   @impl true
   def join("room:" <> room_hash, payload, socket) do
@@ -44,22 +43,6 @@ defmodule ChatsWeb.RoomChannel do
   @impl true
   def handle_in("ping", payload, socket) do
     {:reply, {:ok, payload}, socket}
-  end
-
-  # It is also common to receive messages from the client and
-  # broadcast to everyone in the current topic (room:lobby).
-  @impl true
-  def handle_in("new_message", %{"body" => body}, socket) do
-    message =
-      MessageContext.create(
-        socket.assigns.room_hash,
-        socket.assigns.user_id,
-        socket.assigns.nickname,
-        body
-      )
-
-    broadcast(socket, "new_message", message)
-    {:reply, {:ok, message}, socket}
   end
 
   # Handle presence updates

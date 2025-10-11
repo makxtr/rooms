@@ -115,18 +115,6 @@ const PhoenixSocket = {
             });
         }
     },
-
-    sendMessage(body) {
-        if (currentChannel) {
-            return new Promise((resolve, reject) => {
-                currentChannel
-                    .push("new_message", { body: body })
-                    .receive("ok", (msg) => resolve(msg))
-                    .receive("error", (err) => reject(err));
-            });
-        }
-        return Promise.reject(new Error("Not connected to a room"));
-    },
 };
 
 export default PhoenixSocket;

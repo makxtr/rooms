@@ -24,12 +24,21 @@ defmodule ChatsWeb.MessageController do
   end
 
   @doc """
-  POST /api/messages - Create message (legacy, не используется)
-  Сообщения отправляются через WebSocket
+  POST /api/messages
   """
-  def create(conn, _params) do
+  def create(conn, params) do
+    message =
+      MessageContext.create(
+        room_hash = Map.get(params, "room_hash"),
+        Map.get(params, "user_id"),
+        Map.get(params, "nickname", "Гость"),
+        Map.get(params, "body")
+      )
+
+    ChatsWeb.Endpoint.broadcast("room:#{room_hash}", "new_message", message)
+
     conn
-    |> put_status(:not_implemented)
-    |> json(%{error: "Use WebSocket to send messages"})
+    |> put_status(:created)
+    |> json(message)
   end
 end
