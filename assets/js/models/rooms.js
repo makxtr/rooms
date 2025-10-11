@@ -296,7 +296,6 @@
             localStorage.getItem("sound_in_" + this.data.room_id),
         );
         this.rolesOnline.reset(data.roles_online);
-        // Добавляем myRole в список онлайн пользователей с обновленными данными из сессии
         this.rolesOnline.add(this.myRole);
         this.rolesWaiting.reset(data.roles_waiting || []);
         this.rolesWaiting.enabled = Boolean(data.roles_waiting);
@@ -309,7 +308,6 @@
         }
         this.eventsBuffer = null;
 
-        // Join Phoenix channel for real-time updates
         if (window.PhoenixSocket && this.data.hash) {
             window.PhoenixSocket.joinRoom(this.data.hash, {
                 nickname: this.myRole?.nickname,

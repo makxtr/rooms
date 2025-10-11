@@ -153,9 +153,9 @@ import PhoenixSocket from "../user_socket.js";
 // Get session and prepare app
 (function () {
     var errors = {
-        406: "Пожалуйста, включите куки в&nbsp;вашем браузере",
-        402: "Слишком много одновременных соединений",
-        500: "Ведутся технические работы",
+        406: "Please, enable cookies in your browser",
+        402: "Too many simultaneous connections",
+        500: "Works in progress",
     };
 
     function prepare(saveSelected) {
@@ -183,4 +183,4 @@ window.Rest = Rest;
 window.Router = Router;
 window.Me = Me;
 // window.Socket = Socket; // Removed old socket system
-window.PhoenixSocket = PhoenixSocket; // New Phoenix socket
+window.PhoenixSocket = PhoenixSocket;
