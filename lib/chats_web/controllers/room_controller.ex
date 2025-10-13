@@ -85,13 +85,18 @@ defmodule ChatsWeb.RoomController do
   POST /api/rooms/search
   """
   def search(conn, _params) do
-    case RoomContext.get_random_room() do
-      nil ->
-        room = RoomContext.find_or_create_room("general", %{"topic" => "Общий чат"})
-        json(conn, RoomContext.format_room_response(room))
+    room =
+      case RoomContext.get_random_room() do
+        nil ->
+          RoomContext.find_or_create_room("general", %{
+            "topic" => "Общий чат",
+            "creator_session_id" => SessionContext.get_creator_session_id(conn)
+          })
 
-      room ->
-        json(conn, RoomContext.format_room_response(room))
-    end
+        room ->
+          room
+      end
+
+    json(conn, RoomContext.format_room_response(room))
   end
 end

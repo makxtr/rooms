@@ -34,7 +34,7 @@ defmodule Chats.Utils do
   Generates random nickname
   """
   def gen_random_nickname do
-    adjectives = ["Быстрый", "Умный", "Добрый", "Смелый", "Веселый", "Тихий", "Яркий"]
+    adjectives = ["Быстрый", "Умный", "Добрый", "Малый", "Смелый", "Веселый", "Тихий", "Яркий"]
     nouns = ["Кот", "Лис", "Волк", "Медведь", "Заяц", "Еж", "Белка"]
 
     adjective = Enum.random(adjectives)
