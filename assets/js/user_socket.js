@@ -66,6 +66,17 @@ const PhoenixSocket = {
             }
         });
 
+        currentChannel.on("message_updated", (message) => {
+            if (window.Room) {
+                const messageData = {
+                    message_id: message.message_id,
+                    body: message.body,
+                    content: message.body,
+                };
+                window.Room.trigger("message.content.updated", messageData);
+            }
+        });
+
         currentChannel.on("room_updated", (payload) => {
             if (!window.Rooms?.selected) return;
 

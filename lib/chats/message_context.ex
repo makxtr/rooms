@@ -31,6 +31,16 @@ defmodule Chats.MessageContext do
   end
 
   @doc """
+  Update message by message_id
+  """
+  def update(message_id, attrs) do
+    case Message.update(message_id, %{body: attrs["content"]}) do
+      {:ok, message} -> {:ok, format_one(message)}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
   Format message for sending to client
   """
   def format_one(message) do

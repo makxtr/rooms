@@ -41,6 +41,7 @@ defmodule ChatsWeb.Router do
     # Messages
     get "/messages", MessageController, :index
     post "/messages", MessageController, :create
+    patch "/messages/:message_id", MessageController, :update
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

@@ -800,6 +800,10 @@ Talk.format = function (content) {
     Room.on("message.loaded", function (data) {
         Talk.appendMessage(data);
     });
+
+    Room.on("message.content.updated", function (data) {
+        Talk.updateMessage(data);
+    });
 })();
 
 // Update ignored messages
@@ -1094,3 +1098,6 @@ Talk.format = function (content) {
         content.scrollTop = getMaxScroll();
     };
 })();
+
+// Export Talk globally for legacy code
+window.Talk = Talk;

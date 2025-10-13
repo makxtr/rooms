@@ -44,6 +44,33 @@ defmodule Chats.Message do
   end
 
   @doc """
+  Get message by message_id
+  """
+  def get_by_id(message_id) do
+    @table_name
+    |> :ets.tab2list()
+    |> Enum.find_value(fn {_key, msg} ->
+      if msg.message_id == message_id, do: msg, else: nil
+    end)
+  end
+
+  @doc """
+  Update message content by message_id
+  """
+  def update(message_id, attrs) do
+    case get_by_id(message_id) do
+      nil ->
+        {:error, :not_found}
+
+      message ->
+        updated_message = Map.merge(message, attrs)
+        key = {message.room_hash, message.timestamp}
+        :ets.insert(@table_name, {key, updated_message})
+        {:ok, updated_message}
+    end
+  end
+
+  @doc """
   Delete all messages in room
   """
   def truncate(room_hash) do

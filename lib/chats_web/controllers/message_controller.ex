@@ -41,4 +41,21 @@ defmodule ChatsWeb.MessageController do
     |> put_status(:created)
     |> json(message)
   end
+
+  @doc """
+  PATCH /api/messages/:message_id
+  """
+  def update(conn, %{"message_id" => message_id} = params) do
+    case MessageContext.update(message_id, params) do
+      {:ok, message} ->
+        ChatsWeb.Endpoint.broadcast("room:#{message.room_hash}", "message_updated", message)
+
+        json(conn, message)
+
+      {:error, :not_found} ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "Message not found"})
+    end
+  end
 end
