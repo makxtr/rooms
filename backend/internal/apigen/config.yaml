@@ -4,7 +4,11 @@ generate:
   std-http-server: true
   strict-server: true
   models: true
-  embedded-spec: true
+  # embedded-spec is off: the embedded blob is flate-compressed, and its bytes
+  # change with the Go standard library's compressor version, which breaks the
+  # codegen-drift CI check across Go upgrades. Tests read api/openapi.yaml from
+  # disk instead (see internal/apitest).
+  embedded-spec: false
 output-options:
   # WebSocket event payloads are not referenced from any path;
   # without this they would be pruned from the generated models.
