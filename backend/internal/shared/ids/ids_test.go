@@ -1,12 +1,115 @@
 package ids_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"log/slog"
+	"strings"
 	"testing"
 
 	"github.com/makxtr/rooms/backend/internal/shared/ids"
 )
 
 const sample = "0191e7a0-7c3a-7b1e-8d2f-3a4b5c6d7e8f"
+
+const wantJSON = `{"id":"0191e7a0-7c3a-7b1e-8d2f-3a4b5c6d7e8f"}`
+
+func TestSessionIDJSON(t *testing.T) {
+	id, err := ids.ParseSessionID(sample)
+	if err != nil {
+		t.Fatalf("ParseSessionID: %v", err)
+	}
+	type wrapper struct {
+		ID ids.SessionID `json:"id"`
+	}
+	b, err := json.Marshal(wrapper{ID: id})
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	if got := string(b); got != wantJSON {
+		t.Errorf("Marshal = %q, want %q", got, wantJSON)
+	}
+	var got wrapper
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if got.ID != id {
+		t.Errorf("round trip = %v, want %v", got.ID, id)
+	}
+	var bad wrapper
+	if err := json.Unmarshal([]byte(`{"id":"nope"}`), &bad); err == nil {
+		t.Error("Unmarshal accepted garbage")
+	}
+}
+
+func TestRoomIDJSON(t *testing.T) {
+	id, err := ids.ParseRoomID(sample)
+	if err != nil {
+		t.Fatalf("ParseRoomID: %v", err)
+	}
+	type wrapper struct {
+		ID ids.RoomID `json:"id"`
+	}
+	b, err := json.Marshal(wrapper{ID: id})
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	if got := string(b); got != wantJSON {
+		t.Errorf("Marshal = %q, want %q", got, wantJSON)
+	}
+	var got wrapper
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if got.ID != id {
+		t.Errorf("round trip = %v, want %v", got.ID, id)
+	}
+	var bad wrapper
+	if err := json.Unmarshal([]byte(`{"id":"nope"}`), &bad); err == nil {
+		t.Error("Unmarshal accepted garbage")
+	}
+}
+
+func TestMessageIDJSON(t *testing.T) {
+	id, err := ids.ParseMessageID(sample)
+	if err != nil {
+		t.Fatalf("ParseMessageID: %v", err)
+	}
+	type wrapper struct {
+		ID ids.MessageID `json:"id"`
+	}
+	b, err := json.Marshal(wrapper{ID: id})
+	if err != nil {
+		t.Fatalf("Marshal: %v", err)
+	}
+	if got := string(b); got != wantJSON {
+		t.Errorf("Marshal = %q, want %q", got, wantJSON)
+	}
+	var got wrapper
+	if err := json.Unmarshal(b, &got); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if got.ID != id {
+		t.Errorf("round trip = %v, want %v", got.ID, id)
+	}
+	var bad wrapper
+	if err := json.Unmarshal([]byte(`{"id":"nope"}`), &bad); err == nil {
+		t.Error("Unmarshal accepted garbage")
+	}
+}
+
+func TestSessionIDSlog(t *testing.T) {
+	id, err := ids.ParseSessionID(sample)
+	if err != nil {
+		t.Fatalf("ParseSessionID: %v", err)
+	}
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&buf, nil))
+	logger.Info("test", slog.Any("session_id", id))
+	if !strings.Contains(buf.String(), sample) {
+		t.Errorf("log output = %q, want it to contain %q", buf.String(), sample)
+	}
+}
 
 func TestSessionID(t *testing.T) {
 	id, err := ids.ParseSessionID(sample)

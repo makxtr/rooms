@@ -27,6 +27,22 @@ func (id SessionID) String() string  { return uuid.UUID(id).String() }
 func (id SessionID) IsZero() bool    { return id == SessionID{} }
 func (id SessionID) UUID() uuid.UUID { return uuid.UUID(id) }
 
+// MarshalText renders the canonical textual form, so encoding/json and
+// log/slog render a SessionID as a string instead of a raw byte array.
+func (id SessionID) MarshalText() ([]byte, error) {
+	return []byte(id.String()), nil
+}
+
+// UnmarshalText parses the canonical textual form.
+func (id *SessionID) UnmarshalText(text []byte) error {
+	parsed, err := ParseSessionID(string(text))
+	if err != nil {
+		return err
+	}
+	*id = parsed
+	return nil
+}
+
 // RoomID identifies a room. Users address rooms by hash; RoomID is internal.
 type RoomID uuid.UUID
 
@@ -42,6 +58,22 @@ func ParseRoomID(s string) (RoomID, error) {
 func (id RoomID) String() string  { return uuid.UUID(id).String() }
 func (id RoomID) IsZero() bool    { return id == RoomID{} }
 func (id RoomID) UUID() uuid.UUID { return uuid.UUID(id) }
+
+// MarshalText renders the canonical textual form, so encoding/json and
+// log/slog render a RoomID as a string instead of a raw byte array.
+func (id RoomID) MarshalText() ([]byte, error) {
+	return []byte(id.String()), nil
+}
+
+// UnmarshalText parses the canonical textual form.
+func (id *RoomID) UnmarshalText(text []byte) error {
+	parsed, err := ParseRoomID(string(text))
+	if err != nil {
+		return err
+	}
+	*id = parsed
+	return nil
+}
 
 // MessageID identifies a message. It is a UUIDv7, so it sorts by creation
 // time and doubles as the pagination cursor.
@@ -59,3 +91,19 @@ func ParseMessageID(s string) (MessageID, error) {
 func (id MessageID) String() string  { return uuid.UUID(id).String() }
 func (id MessageID) IsZero() bool    { return id == MessageID{} }
 func (id MessageID) UUID() uuid.UUID { return uuid.UUID(id) }
+
+// MarshalText renders the canonical textual form, so encoding/json and
+// log/slog render a MessageID as a string instead of a raw byte array.
+func (id MessageID) MarshalText() ([]byte, error) {
+	return []byte(id.String()), nil
+}
+
+// UnmarshalText parses the canonical textual form.
+func (id *MessageID) UnmarshalText(text []byte) error {
+	parsed, err := ParseMessageID(string(text))
+	if err != nil {
+		return err
+	}
+	*id = parsed
+	return nil
+}
