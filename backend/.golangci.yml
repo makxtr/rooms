@@ -1,0 +1,122 @@
+version: "2"
+
+run:
+  build-tags:
+    - integration
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - depguard
+    - errorlint
+    - gocritic
+    - misspell
+    - noctx
+    - sloglint
+    - unconvert
+  settings:
+    depguard:
+      rules:
+        # domain/: standard library and the shared kernel, nothing else.
+        domain-purity:
+          list-mode: strict
+          files:
+            - "**/internal/*/domain/**"
+          allow:
+            - $gostd
+            - github.com/makxtr/rooms/backend/internal/shared/ids
+        # app/: use cases know ports, not transports or storage.
+        app-layer:
+          list-mode: lax
+          files:
+            - "**/internal/*/app/**"
+          deny:
+            - pkg: github.com/makxtr/rooms/backend/internal/apigen
+              desc: transport types stay in adapters/http
+            - pkg: github.com/makxtr/rooms/backend/internal/realtime
+              desc: publish through the context's own EventPublisher port
+            - pkg: github.com/makxtr/rooms/backend/internal/bootstrap
+              desc: wiring depends on contexts, not the other way round
+            - pkg: github.com/jackc/pgx
+              desc: storage stays in adapters/postgres
+            - pkg: net/http
+              desc: transport stays in adapters/http
+        identity-isolation:
+          list-mode: lax
+          files:
+            - "**/internal/identity/**"
+          deny:
+            - pkg: github.com/makxtr/rooms/backend/internal/rooms
+              desc: bounded contexts talk through ports, not imports
+            - pkg: github.com/makxtr/rooms/backend/internal/conversation
+              desc: bounded contexts talk through ports, not imports
+        rooms-isolation:
+          list-mode: lax
+          files:
+            - "**/internal/rooms/**"
+          deny:
+            - pkg: github.com/makxtr/rooms/backend/internal/identity
+              desc: bounded contexts talk through ports, not imports
+            - pkg: github.com/makxtr/rooms/backend/internal/conversation
+              desc: bounded contexts talk through ports, not imports
+        conversation-isolation:
+          list-mode: lax
+          files:
+            - "**/internal/conversation/**"
+            - "!**/internal/conversation/adapters/roomaccess/**"
+          deny:
+            - pkg: github.com/makxtr/rooms/backend/internal/identity
+              desc: bounded contexts talk through ports, not imports
+            - pkg: github.com/makxtr/rooms/backend/internal/rooms
+              desc: only adapters/roomaccess may call into rooms
+        # The one sanctioned bridge: it may call rooms use cases, nothing deeper.
+        conversation-roomaccess-bridge:
+          list-mode: lax
+          files:
+            - "**/internal/conversation/adapters/roomaccess/**"
+          deny:
+            - pkg: github.com/makxtr/rooms/backend/internal/rooms/domain
+              desc: the bridge calls rooms/app only
+            - pkg: github.com/makxtr/rooms/backend/internal/rooms/adapters
+              desc: the bridge calls rooms/app only
+            - pkg: github.com/makxtr/rooms/backend/internal/identity
+              desc: bounded contexts talk through ports, not imports
+        # The hub is generic: it delivers envelopes and knows no domain.
+        realtime-isolation:
+          list-mode: lax
+          files:
+            - "**/internal/realtime/**"
+          deny:
+            - pkg: github.com/makxtr/rooms/backend/internal/identity
+              desc: the hub is domain-agnostic
+            - pkg: github.com/makxtr/rooms/backend/internal/rooms
+              desc: the hub is domain-agnostic
+            - pkg: github.com/makxtr/rooms/backend/internal/conversation
+              desc: the hub is domain-agnostic
+        # shared/ and platform/ are leaves: they never look up at contexts.
+        foundation-isolation:
+          list-mode: lax
+          files:
+            - "**/internal/shared/**"
+            - "**/internal/platform/**"
+          deny:
+            - pkg: github.com/makxtr/rooms/backend/internal/identity
+              desc: foundation packages do not depend on contexts
+            - pkg: github.com/makxtr/rooms/backend/internal/rooms
+              desc: foundation packages do not depend on contexts
+            - pkg: github.com/makxtr/rooms/backend/internal/conversation
+              desc: foundation packages do not depend on contexts
+            - pkg: github.com/makxtr/rooms/backend/internal/realtime
+              desc: foundation packages do not depend on contexts
+            - pkg: github.com/makxtr/rooms/backend/internal/bootstrap
+              desc: foundation packages do not depend on wiring
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/makxtr/rooms/backend

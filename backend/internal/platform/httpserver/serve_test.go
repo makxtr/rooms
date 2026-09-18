@@ -47,7 +47,7 @@ func TestServeFinishesInFlightRequestOnShutdown(t *testing.T) {
 			got <- result{err: err}
 			return
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		got <- result{status: resp.StatusCode}
 	}()
 

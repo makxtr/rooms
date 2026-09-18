@@ -18,7 +18,7 @@ import (
 func Do(t *testing.T, h http.Handler, req *http.Request) *httptest.ResponseRecorder {
 	t.Helper()
 
-	doc, err := apigen.GetSwagger()
+	doc, err := apigen.GetSpec()
 	if err != nil {
 		t.Fatalf("load embedded openapi spec: %v", err)
 	}

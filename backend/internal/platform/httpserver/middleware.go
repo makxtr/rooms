@@ -4,6 +4,7 @@ package httpserver
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"runtime/debug"
@@ -96,7 +97,7 @@ func Recover(log *slog.Logger) func(http.Handler) http.Handler {
 				if rec == nil {
 					return
 				}
-				if rec == http.ErrAbortHandler { // sentinel panic value; net/http compares it by identity too
+				if err, ok := rec.(error); ok && errors.Is(err, http.ErrAbortHandler) { // sentinel panic value; net/http compares it by identity too
 					panic(rec)
 				}
 				log.ErrorContext(r.Context(), "panic recovered",
