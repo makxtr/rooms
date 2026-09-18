@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Rooms API
+  version: 0.1.0
+  description: >
+    Anonymous real-time chat. Commands go over REST; server-to-client events go
+    over the WebSocket at /ws. Payload schemas of WebSocket events live in
+    components/schemas next to the REST models.
+servers:
+  - url: /api/v1
+tags:
+  - name: service
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [service]
+      summary: Liveness probe
+      responses:
+        "200":
+          description: The process is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+        default:
+          $ref: "#/components/responses/Problem"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          example: ok
+    Problem:
+      description: RFC 7807 problem details with a machine-readable code.
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type:
+          type: string
+          example: about:blank
+        title:
+          type: string
+          example: Forbidden
+        status:
+          type: integer
+          example: 403
+        code:
+          type: string
+          description: Stable machine-readable error identifier.
+          example: room.banned
+        detail:
+          type: string
+  responses:
+    Problem:
+      description: Error
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"

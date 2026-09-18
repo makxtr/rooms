@@ -1,0 +1,11 @@
+package: apigen
+output: api.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true
+  embedded-spec: true
+output-options:
+  # WebSocket event payloads are not referenced from any path;
+  # without this they would be pruned from the generated models.
+  skip-prune: true
