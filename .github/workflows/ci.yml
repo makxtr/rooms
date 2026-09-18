@@ -54,4 +54,9 @@ jobs:
         working-directory: web
       - run: make generate
       - name: Generated code must match the contract
-        run: git diff --exit-code
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git status --porcelain
+            git diff
+            exit 1
+          fi

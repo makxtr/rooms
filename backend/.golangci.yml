@@ -26,6 +26,13 @@ linters:
           allow:
             - $gostd
             - github.com/makxtr/rooms/backend/internal/shared/ids
+            # The repo's convention is external test packages
+            # (`package domain_test` importing `.../internal/<ctx>/domain`),
+            # so each context's own domain package must be allowed for its
+            # own tests to import it.
+            - github.com/makxtr/rooms/backend/internal/identity/domain
+            - github.com/makxtr/rooms/backend/internal/rooms/domain
+            - github.com/makxtr/rooms/backend/internal/conversation/domain
         # app/: use cases know ports, not transports or storage.
         app-layer:
           list-mode: lax
@@ -42,6 +49,20 @@ linters:
               desc: storage stays in adapters/postgres
             - pkg: net/http
               desc: transport stays in adapters/http
+        # app/: use cases depend on ports, never on their own adapters.
+        # _test.go is excluded because use-case tests wire in-memory adapters.
+        app-inward:
+          list-mode: lax
+          files:
+            - "**/internal/*/app/**"
+            - "!**/*_test.go"
+          deny:
+            - pkg: github.com/makxtr/rooms/backend/internal/identity/adapters
+              desc: use cases depend on ports, never on their own adapters
+            - pkg: github.com/makxtr/rooms/backend/internal/rooms/adapters
+              desc: use cases depend on ports, never on their own adapters
+            - pkg: github.com/makxtr/rooms/backend/internal/conversation/adapters
+              desc: use cases depend on ports, never on their own adapters
         identity-isolation:
           list-mode: lax
           files:
