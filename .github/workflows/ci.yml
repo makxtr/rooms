@@ -10,7 +10,9 @@ permissions:
 # A push to a branch with an open pull request triggers both events; keep one run.
 concurrency:
   group: ci-${{ github.head_ref || github.ref_name }}
-  cancel-in-progress: true
+  # Superseded runs are cancelled on branches, but every commit on main keeps
+  # its result.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   backend:

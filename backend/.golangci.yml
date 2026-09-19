@@ -21,7 +21,7 @@ linters:
       # Types are resolved, so an import alias cannot hide a call.
       analyze-types: true
       forbid:
-        - pattern: ^time\.Now$
+        - pattern: ^time\.(Now|Since|Until)$
           msg: domain and use-case code take `now` as a parameter; the clock is read at the edge (platform/clock)
         # With analyze-types the name is matched fully qualified (import path included).
         - pattern: ^(github\.com/google/)?uuid\.New.*$

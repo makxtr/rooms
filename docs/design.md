@@ -94,7 +94,7 @@ rooms/
 - контекст не импортирует `domain/`, `app/` и `adapters/` другого контекста. Исключение —
   адаптер порта к другому контексту (пример: `conversation/adapters/roomaccess` импортирует
   `rooms/app`), и composition root (`bootstrap`);
-- `shared/ids` и `platform` доступны всем; `realtime` доступен только из `adapters/` и `main`;
+- `shared/ids` и `platform` доступны всем; `realtime` доступен только из `adapters/` и `bootstrap`;
 - `realtime` не импортирует ни один контекст.
 
 **Идентичность в use case-ах.** Middleware загружает сессию и кладёт в `context`
