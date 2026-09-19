@@ -12,7 +12,7 @@ import (
 	"github.com/makxtr/rooms/backend/internal/platform/reqid"
 )
 
-func lastJSONLine(t *testing.T, buf *bytes.Buffer) map[string]any {
+func onlyJSONLine(t *testing.T, buf *bytes.Buffer) map[string]any {
 	t.Helper()
 	var entry map[string]any
 	if err := json.Unmarshal(buf.Bytes(), &entry); err != nil {
@@ -27,7 +27,7 @@ func TestRequestIDIsAddedFromContext(t *testing.T) {
 
 	log.InfoContext(reqid.With(context.Background(), "abc-123"), "hello")
 
-	if got := lastJSONLine(t, &buf)["request_id"]; got != "abc-123" {
+	if got := onlyJSONLine(t, &buf)["request_id"]; got != "abc-123" {
 		t.Errorf("request_id = %v, want abc-123", got)
 	}
 }
@@ -38,7 +38,7 @@ func TestNoRequestIDWithoutOne(t *testing.T) {
 
 	log.InfoContext(context.Background(), "hello")
 
-	if _, ok := lastJSONLine(t, &buf)["request_id"]; ok {
+	if _, ok := onlyJSONLine(t, &buf)["request_id"]; ok {
 		t.Error("request_id present although the context carries none")
 	}
 }
@@ -51,7 +51,7 @@ func TestDerivedLoggerKeepsRequestID(t *testing.T) {
 
 	log.InfoContext(reqid.With(context.Background(), "abc-123"), "hello")
 
-	entry := lastJSONLine(t, &buf)
+	entry := onlyJSONLine(t, &buf)
 	if entry["request_id"] != "abc-123" || entry["component"] != "test" {
 		t.Errorf("entry = %v", entry)
 	}

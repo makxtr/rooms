@@ -26,6 +26,10 @@ linters:
         # With analyze-types the name is matched fully qualified (import path included).
         - pattern: ^(github\.com/google/)?uuid\.New.*$
           msg: domain and use-case code receive identifiers; they are generated behind the IDGenerator port
+    sloglint:
+      # request_id is attached from the context, so a log call that has a
+      # context in scope must pass it.
+      context: scope
     depguard:
       rules:
         # domain/: standard library and the shared kernel, nothing else.

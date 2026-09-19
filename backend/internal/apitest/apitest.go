@@ -67,7 +67,9 @@ func newContract(path string) (*contract, error) {
 }
 
 // serve runs req through h and reports the first way the exchange departs
-// from the contract. The recorder is returned even then, for diagnostics.
+// from the contract. The recorder is nil when the request never reached the
+// handler (an unknown route or an invalid request); it is non-nil, for
+// diagnostics, when the response itself violated the contract.
 func (c *contract) serve(h http.Handler, req *http.Request) (*httptest.ResponseRecorder, error) {
 	route, pathParams, err := c.router.FindRoute(req)
 	if err != nil {

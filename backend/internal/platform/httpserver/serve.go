@@ -25,6 +25,12 @@ func Serve(ctx context.Context, ln net.Listener, h http.Handler, shutdownTimeout
 		// WriteTimeout stay unset on purpose: they would cut long-lived WebSocket
 		// connections (M4); request bodies are bounded per handler instead.
 		IdleTimeout: 2 * time.Minute,
+		// net/http reports its own failures (a handler double-calling
+		// WriteHeader, a panic reaching the server, an accept error) through
+		// this logger, not through the handler. Without it they would reach
+		// the process logger via the std-log bridge at INFO — mislabelled,
+		// and lost once the process runs at warn level.
+		ErrorLog: slog.NewLogLogger(log.Handler(), slog.LevelError),
 	}
 
 	errc := make(chan error, 1)
@@ -36,7 +42,7 @@ func Serve(ctx context.Context, ln net.Listener, h http.Handler, shutdownTimeout
 	case <-ctx.Done():
 	}
 
-	log.Info("shutting down http server", "timeout", shutdownTimeout)
+	log.InfoContext(ctx, "shutting down http server", "timeout", shutdownTimeout)
 	// ctx is already cancelled; the shutdown deadline must not inherit that.
 	sctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownTimeout)
 	defer cancel()

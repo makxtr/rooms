@@ -1,11 +1,15 @@
 package httpserver_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"net"
 	"net/http"
 	"runtime"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -169,5 +173,90 @@ func TestServeForceClosesConnectionsWhenDrainDeadlinePasses(t *testing.T) {
 		}
 	case <-time.After(limit):
 		t.Fatal("client connection was left open after Serve returned")
+	}
+}
+
+// lockedBuffer is a bytes.Buffer safe for concurrent use: the server logs
+// net/http's own errors from its own goroutine, independently of the request
+// and shutdown goroutines this test also touches.
+type lockedBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *lockedBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *lockedBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
+
+// net/http reports its own failures (a handler double-calling WriteHeader, a
+// panic reaching the server, an accept error) through http.Server.ErrorLog,
+// not through the handler. Serve must route that logger into ours, at error
+// level, or these failures are mislabelled as INFO by the std-log bridge and
+// lost entirely once ROOMS_LOG_LEVEL=warn.
+func TestServeLogsNetHTTPErrorsAtErrorLevel(t *testing.T) {
+	var buf lockedBuffer
+	log := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelWarn}))
+
+	h := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusOK) // triggers net/http's "superfluous response.WriteHeader call"
+	})
+
+	ln, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	served := make(chan error, 1)
+	go func() { served <- httpserver.Serve(ctx, ln, h, 5*time.Second, log) }()
+
+	const limit = 5 * time.Second
+	reqDone := make(chan struct{})
+	go func() {
+		defer close(reqDone)
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://"+ln.Addr().String()+"/", nil)
+		if err != nil {
+			return
+		}
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return
+		}
+		_ = resp.Body.Close()
+	}()
+	select {
+	case <-reqDone:
+	case <-time.After(limit):
+		t.Fatal("request never completed")
+	}
+
+	cancel()
+	select {
+	case err := <-served:
+		if err != nil {
+			t.Errorf("Serve returned %v, want nil", err)
+		}
+	case <-time.After(limit):
+		t.Fatal("Serve never returned")
+	}
+
+	// All of the server's goroutines for this request are done now that Serve
+	// has returned, so the buffer is safe to inspect without racing writes.
+	got := buf.String()
+	if !strings.Contains(got, "superfluous") {
+		t.Errorf("log = %s, want it to mention net/http's superfluous WriteHeader warning", got)
+	}
+	if !strings.Contains(got, `"level":"ERROR"`) {
+		t.Errorf("log = %s, want the entry at ERROR level", got)
 	}
 }
