@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net"
@@ -11,7 +12,8 @@ import (
 
 // Serve handles requests on ln until ctx is cancelled, then shuts down
 // gracefully: it stops accepting connections and waits up to shutdownTimeout
-// for in-flight requests. It returns nil after a clean shutdown.
+// for in-flight requests; if they do not finish in time it closes their
+// connections and returns an error. It returns nil after a clean shutdown.
 //
 // Note for M4: http.Server.Shutdown does not wait for hijacked connections,
 // so the WebSocket hub is closed separately, after Serve returns.
@@ -19,6 +21,10 @@ func Serve(ctx context.Context, ln net.Listener, h http.Handler, shutdownTimeout
 	srv := &http.Server{
 		Handler:           h,
 		ReadHeaderTimeout: 10 * time.Second,
+		// Keep-alive connections that go quiet are reclaimed. ReadTimeout and
+		// WriteTimeout stay unset on purpose: they would cut long-lived WebSocket
+		// connections (M4); request bodies are bounded per handler instead.
+		IdleTimeout: 2 * time.Minute,
 	}
 
 	errc := make(chan error, 1)
@@ -35,7 +41,10 @@ func Serve(ctx context.Context, ln net.Listener, h http.Handler, shutdownTimeout
 	sctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownTimeout)
 	defer cancel()
 	if err := srv.Shutdown(sctx); err != nil {
-		return fmt.Errorf("http shutdown: %w", err)
+		// The deadline passed with requests still in flight. Drop their
+		// connections rather than leave handlers running behind a Serve that has
+		// reported it is done.
+		return fmt.Errorf("http shutdown: %w", errors.Join(err, srv.Close()))
 	}
 	return nil
 }
