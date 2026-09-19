@@ -33,9 +33,14 @@ func NewHandler(log *slog.Logger) http.Handler {
 		// Handlers return domain errors; mapping them to status + code is added
 		// here as contexts appear. Anything unmapped is a 500.
 		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
-			log.ErrorContext(r.Context(), "unhandled handler error",
-				"error", err,
-			)
+			if httpserver.ResponseStarted(w) {
+				// The handler's own response was already on the wire when writing it
+				// failed — in practice a client that went away. There is nothing left
+				// to send, and it is not a server fault.
+				log.WarnContext(r.Context(), "response write failed", "error", err)
+				return
+			}
+			log.ErrorContext(r.Context(), "unhandled handler error", "error", err)
 			problem.Write(w, http.StatusInternalServerError, "internal", "internal server error")
 		},
 	})
@@ -45,11 +50,7 @@ func NewHandler(log *slog.Logger) http.Handler {
 		ErrorHandlerFunc: badRequest,
 	})
 
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, _ *http.Request) {
-		problem.Write(w, http.StatusNotFound, "not_found", "no such endpoint")
-	})
-
-	return httpserver.Chain(mux,
+	return httpserver.Chain(httpserver.WithProblemFallback(mux),
 		httpserver.RequestID,
 		httpserver.AccessLog(log),
 		httpserver.Recover(log),
