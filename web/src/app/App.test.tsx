@@ -12,7 +12,10 @@ function renderApp() {
   );
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("App", () => {
   it("shows the backend status reported by /health", async () => {
@@ -59,6 +62,5 @@ describe("App", () => {
     // Reaching "unavailable" through TanStack Query's "data cannot be undefined"
     // complaint would be an accident, not error handling.
     expect(consoleError).not.toHaveBeenCalled();
-    consoleError.mockRestore();
   });
 });

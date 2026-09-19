@@ -22,15 +22,35 @@ export class ApiError extends Error {
 }
 
 function isProblem(value: unknown): value is Problem {
-  return typeof value === "object" && value !== null && "code" in value && "title" in value;
+  if (typeof value !== "object" || value === null || !("code" in value) || !("title" in value)) {
+    return false;
+  }
+  const candidate = value as Record<string, unknown>;
+  return typeof candidate.code === "string" && typeof candidate.title === "string";
+}
+
+/** Builds the ApiError for a non-successful (or, for unwrap, body-less) response. */
+function toApiError(result: { error?: unknown; response: Response }): ApiError {
+  return new ApiError(result.response.status, isProblem(result.error) ? result.error : undefined);
 }
 
 /**
- * Turns an openapi-fetch result into data or a thrown ApiError. Every query and
- * mutation goes through this: checking `error` alone is not enough, because an
- * error response with an empty or non-JSON body has no usable `error` value.
+ * Turns an openapi-fetch result into data or a thrown ApiError. Use this for operations
+ * whose successful response has a body: an OK response without data is a contract
+ * violation and throws, same as an error response. Checking `error` alone is not enough,
+ * because an error response with an empty or non-JSON body has no usable `error` value.
  */
 export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
   if (result.response.ok && result.data !== undefined) return result.data;
-  throw new ApiError(result.response.status, isProblem(result.error) ? result.error : undefined);
+  throw toApiError(result);
+}
+
+/**
+ * Turns an openapi-fetch result into void or a thrown ApiError. Use this for operations
+ * whose successful response has no body (a 204, for instance) — unlike `unwrap`, a
+ * body-less success is not an error here.
+ */
+export function unwrapEmpty(result: { error?: unknown; response: Response }): void {
+  if (result.response.ok) return;
+  throw toApiError(result);
 }
