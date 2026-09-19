@@ -17,3 +17,5 @@
     make test          # go test -race
     make lint          # golangci-lint
     make web-check     # typecheck + vitest + build
+
+Нужны: Go ≥ 1.26, Node 26 (web/.nvmrc), golangci-lint 2.13, Docker — для Postgres.

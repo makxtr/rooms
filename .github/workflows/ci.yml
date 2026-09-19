@@ -7,9 +7,15 @@ on:
 permissions:
   contents: read
 
+# A push to a branch with an open pull request triggers both events; keep one run.
+concurrency:
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -26,11 +32,12 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version-file: web/.nvmrc
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci
@@ -39,6 +46,7 @@ jobs:
 
   codegen-drift:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -47,7 +55,7 @@ jobs:
           cache-dependency-path: backend/go.sum
       - uses: actions/setup-node@v4
         with:
-          node-version: 26
+          node-version-file: web/.nvmrc
           cache: npm
           cache-dependency-path: web/package-lock.json
       - run: npm ci

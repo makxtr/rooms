@@ -61,14 +61,17 @@ Rust (WASM-ядро разметки или realtime-gateway), приватны�
 rooms/
 ├── api/openapi.yaml            единый контракт: REST + схемы payload-ов WS-событий
 ├── backend/
-│   ├── cmd/server/main.go      composition root, ручная сборка зависимостей
+│   ├── cmd/server/main.go      точка входа: конфиг, логгер, сигналы
 │   └── internal/
 │       ├── shared/ids/         shared kernel: только типы SessionID, RoomID, MessageID
 │       ├── identity/           сессия, ник, статус, ignore-лист
 │       ├── rooms/              комната, роли, баны, очередь на вход
 │       ├── conversation/       сообщения
 │       ├── realtime/           обобщённый WebSocket-hub, presence
-│       └── platform/           конфиг, логгер, http-сервер, пул Postgres, часы, rate limit
+│       ├── apigen/             сгенерированный из контракта strict-сервер (не редактируется)
+│       ├── apitest/            проверка запросов и ответов по контракту в тестах
+│       ├── bootstrap/          composition root: ручная сборка зависимостей и http.Handler
+│       └── platform/           конфиг, логгер, http-сервер, пул Postgres, часы, rate limit, reqid
 ├── web/                        React + Vite + TypeScript
 ├── legacy/                     Elixir-версия как образец до этапа M7
 └── docs/
@@ -90,7 +93,7 @@ rooms/
 - зависимости направлены внутрь: `adapters → app → domain`;
 - контекст не импортирует `domain/`, `app/` и `adapters/` другого контекста. Исключение —
   адаптер порта к другому контексту (пример: `conversation/adapters/roomaccess` импортирует
-  `rooms/app`), и composition root;
+  `rooms/app`), и composition root (`bootstrap`);
 - `shared/ids` и `platform` доступны всем; `realtime` доступен только из `adapters/` и `main`;
 - `realtime` не импортирует ни один контекст.
 
