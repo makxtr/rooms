@@ -10,15 +10,35 @@ import (
 	"github.com/google/uuid"
 )
 
+// parseCanonical accepts exactly one spelling per identifier: the lowercase,
+// hyphenated 36-character form. uuid.Parse alone also takes urn:uuid:, braces,
+// dashless and uppercase input, which would give one resource several URLs and
+// make raw-string comparison of ids unreliable. The nil UUID is rejected
+// because a zero id means "absent" everywhere else.
+func parseCanonical(kind, s string) (uuid.UUID, error) {
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return uuid.UUID{}, fmt.Errorf("parse %s id: %w", kind, err)
+	}
+	if u.String() != s {
+		return uuid.UUID{}, fmt.Errorf("parse %s id: %q is not in canonical form", kind, s)
+	}
+	if u == uuid.Nil {
+		return uuid.UUID{}, fmt.Errorf("parse %s id: nil UUID", kind)
+	}
+	return u, nil
+}
+
 // SessionID is the public identifier of an anonymous session.
 // It is visible to other users; the secret session token is a different value.
 type SessionID uuid.UUID
 
-// ParseSessionID parses the canonical textual form of a SessionID.
+// ParseSessionID parses the canonical textual form (lowercase, hyphenated);
+// any other spelling is an error.
 func ParseSessionID(s string) (SessionID, error) {
-	u, err := uuid.Parse(s)
+	u, err := parseCanonical("session", s)
 	if err != nil {
-		return SessionID{}, fmt.Errorf("parse session id: %w", err)
+		return SessionID{}, err
 	}
 	return SessionID(u), nil
 }
@@ -46,11 +66,12 @@ func (id *SessionID) UnmarshalText(text []byte) error {
 // RoomID identifies a room. Users address rooms by hash; RoomID is internal.
 type RoomID uuid.UUID
 
-// ParseRoomID parses the canonical textual form of a RoomID.
+// ParseRoomID parses the canonical textual form (lowercase, hyphenated); any
+// other spelling is an error.
 func ParseRoomID(s string) (RoomID, error) {
-	u, err := uuid.Parse(s)
+	u, err := parseCanonical("room", s)
 	if err != nil {
-		return RoomID{}, fmt.Errorf("parse room id: %w", err)
+		return RoomID{}, err
 	}
 	return RoomID(u), nil
 }
@@ -79,11 +100,15 @@ func (id *RoomID) UnmarshalText(text []byte) error {
 // time and doubles as the pagination cursor.
 type MessageID uuid.UUID
 
-// ParseMessageID parses the canonical textual form of a MessageID.
+// ParseMessageID parses the canonical textual form (lowercase, hyphenated);
+// any other spelling is an error.
 func ParseMessageID(s string) (MessageID, error) {
-	u, err := uuid.Parse(s)
+	u, err := parseCanonical("message", s)
 	if err != nil {
-		return MessageID{}, fmt.Errorf("parse message id: %w", err)
+		return MessageID{}, err
+	}
+	if u.Version() != 7 {
+		return MessageID{}, fmt.Errorf("parse message id: UUID version %d, want 7", u.Version())
 	}
 	return MessageID(u), nil
 }

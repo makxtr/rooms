@@ -165,6 +165,41 @@ func TestMessageID(t *testing.T) {
 	}
 }
 
+func TestParseRejectsNonCanonicalForms(t *testing.T) {
+	for name, s := range map[string]string{
+		"urn":       "urn:uuid:" + sample,
+		"braces":    "{" + sample + "}",
+		"no dashes": strings.ReplaceAll(sample, "-", ""),
+		"uppercase": strings.ToUpper(sample),
+		"nil uuid":  "00000000-0000-0000-0000-000000000000",
+		"empty":     "",
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := ids.ParseSessionID(s); err == nil {
+				t.Errorf("ParseSessionID(%q) succeeded", s)
+			}
+			if _, err := ids.ParseRoomID(s); err == nil {
+				t.Errorf("ParseRoomID(%q) succeeded", s)
+			}
+			if _, err := ids.ParseMessageID(s); err == nil {
+				t.Errorf("ParseMessageID(%q) succeeded", s)
+			}
+		})
+	}
+}
+
+// MessageID doubles as the pagination cursor, which only works for
+// time-ordered UUIDv7.
+func TestParseMessageIDRequiresVersion7(t *testing.T) {
+	const v4 = "3d6f0a52-8b1c-4e7a-9f3d-2c5b8a7e6d10"
+	if _, err := ids.ParseMessageID(v4); err == nil {
+		t.Error("ParseMessageID accepted a UUIDv4")
+	}
+	if _, err := ids.ParseSessionID(v4); err != nil {
+		t.Errorf("ParseSessionID rejected a UUIDv4: %v", err)
+	}
+}
+
 func TestIDsAreMapKeys(t *testing.T) {
 	a, _ := ids.ParseSessionID(sample)
 	b, _ := ids.ParseSessionID(sample)
