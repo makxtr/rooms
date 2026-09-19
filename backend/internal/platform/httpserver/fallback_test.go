@@ -68,3 +68,43 @@ func TestFallbackWrongMethodIsProblem405WithAllow(t *testing.T) {
 		t.Errorf("code = %q, want method_not_allowed", code)
 	}
 }
+
+// A non-canonical path that still matches nothing after ServeMux cleans it
+// (e.g. collapsing the double slash) would otherwise earn a 307 redirect to a
+// cleaned-up path that also 404s. We answer directly instead: it saves the
+// client a round trip and there is no Location header to prove it.
+func TestFallbackUnmatchedNonCanonicalPathIsProblem404(t *testing.T) {
+	rec := httptest.NewRecorder()
+	newFallbackMux().ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/nope//x", nil))
+
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want 404", rec.Code)
+	}
+	if code := problemCode(t, rec); code != "not_found" {
+		t.Errorf("code = %q, want not_found", code)
+	}
+	if loc := rec.Header().Get("Location"); loc != "" {
+		t.Errorf("Location = %q, want no redirect", loc)
+	}
+}
+
+// "OPTIONS *" addresses the server itself, not a resource on it.
+// ServeMux.ServeHTTP special-cases this before routing and answers 400 with
+// Connection: close; mux.Handler does not implement that special case, so the
+// wrapper must leave this request to the mux untouched rather than probing it.
+func TestFallbackLeavesAsteriskRequestsToTheMux(t *testing.T) {
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodOptions, "*", nil)
+	if req.RequestURI != "*" {
+		t.Fatalf("RequestURI = %q, want \"*\" (precondition for this test)", req.RequestURI)
+	}
+
+	rec := httptest.NewRecorder()
+	newFallbackMux().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want 400", rec.Code)
+	}
+	if conn := rec.Header().Get("Connection"); conn != "close" {
+		t.Errorf("Connection = %q, want close", conn)
+	}
+}

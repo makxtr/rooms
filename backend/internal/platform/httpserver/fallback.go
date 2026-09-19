@@ -14,6 +14,14 @@ import (
 // would never produce a 405 again.
 func WithProblemFallback(mux *http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.RequestURI == "*" {
+			// "OPTIONS *" addresses the server, not a resource. ServeMux.ServeHTTP
+			// special-cases it (400, Connection: close) before routing, and
+			// mux.Handler does not — so leave it to the mux.
+			mux.ServeHTTP(w, r)
+			return
+		}
+
 		fallback, pattern := mux.Handler(r)
 		if pattern != "" {
 			// Serve through the mux itself: only ServeMux.ServeHTTP populates r.PathValue.
@@ -21,9 +29,13 @@ func WithProblemFallback(mux *http.ServeMux) http.Handler {
 			return
 		}
 
-		// Nothing matched. The mux's own fallback handler knows whether this is a
-		// 404 or a 405 and which methods exist; run it against a scratch writer to
-		// learn that, then answer in the API's error format.
+		// Nothing matched: an empty pattern means net/http would answer with a
+		// handler of its own — a genuine 404, a 405, or a redirect to a
+		// cleaned-up path (e.g. a collapsed double slash) that still matches
+		// nothing. Run that handler against a scratch writer to learn which one
+		// it is, then answer in the API's error format. The 405 keeps its Allow
+		// header; everything else becomes a 404, because redirecting to a path
+		// that does not exist only costs the client a round trip.
 		probe := &headerProbe{header: make(http.Header)}
 		fallback.ServeHTTP(probe, r)
 
