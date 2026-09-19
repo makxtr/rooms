@@ -1,14 +1,17 @@
 package bootstrap_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/makxtr/rooms/backend/internal/apitest"
 	"github.com/makxtr/rooms/backend/internal/bootstrap"
+	"github.com/makxtr/rooms/backend/internal/platform/logging"
 )
 
 func newHandler() http.Handler { return bootstrap.NewHandler(slog.New(slog.DiscardHandler)) }
@@ -30,6 +33,22 @@ func TestHealth(t *testing.T) {
 	}
 	if rec.Header().Get("X-Request-ID") == "" {
 		t.Error("X-Request-ID is missing: middleware chain is not applied")
+	}
+}
+
+func TestAccessLogCarriesTheResponseRequestID(t *testing.T) {
+	var buf bytes.Buffer
+	h := bootstrap.NewHandler(logging.New(&buf, slog.LevelInfo, "json"))
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/api/v1/health", nil))
+
+	id := rec.Header().Get("X-Request-ID")
+	if id == "" {
+		t.Fatal("X-Request-ID is missing")
+	}
+	if !strings.Contains(buf.String(), `"request_id":"`+id+`"`) {
+		t.Errorf("access log does not carry request id %s: %s", id, buf.String())
 	}
 }
 

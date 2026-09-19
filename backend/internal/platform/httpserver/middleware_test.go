@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/makxtr/rooms/backend/internal/platform/httpserver"
+	"github.com/makxtr/rooms/backend/internal/platform/reqid"
 )
 
 func discardLogger() *slog.Logger { return slog.New(slog.DiscardHandler) }
@@ -38,7 +39,7 @@ func TestChainOrder(t *testing.T) {
 func TestRequestID(t *testing.T) {
 	var seen string
 	h := httpserver.RequestID(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		seen = httpserver.RequestIDFrom(r.Context())
+		seen = reqid.From(r.Context())
 	}))
 	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
 	req.Header.Set("X-Request-ID", "client-supplied")

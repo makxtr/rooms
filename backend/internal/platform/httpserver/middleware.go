@@ -3,7 +3,6 @@
 package httpserver
 
 import (
-	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/makxtr/rooms/backend/internal/platform/problem"
+	"github.com/makxtr/rooms/backend/internal/platform/reqid"
 )
 
 // Chain wraps h so that the first middleware listed is the outermost one.
@@ -23,23 +23,16 @@ func Chain(h http.Handler, mws ...func(http.Handler) http.Handler) http.Handler 
 	return h
 }
 
-type requestIDKey struct{}
-
 // RequestID assigns every request a fresh identifier, exposes it in the
-// X-Request-ID response header and stores it in the context. A client-supplied
-// header is ignored: it would let callers forge log correlation.
+// X-Request-ID response header and stores it in the context (package reqid).
+// A client-supplied header is ignored: it would let callers forge log
+// correlation.
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := uuid.NewString()
 		w.Header().Set("X-Request-ID", id)
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), requestIDKey{}, id)))
+		next.ServeHTTP(w, r.WithContext(reqid.With(r.Context(), id)))
 	})
-}
-
-// RequestIDFrom returns the identifier set by RequestID, or "".
-func RequestIDFrom(ctx context.Context) string {
-	id, _ := ctx.Value(requestIDKey{}).(string)
-	return id
 }
 
 // statusRecorder remembers the status code. Unwrap lets
@@ -81,7 +74,6 @@ func AccessLog(log *slog.Logger) func(http.Handler) http.Handler {
 				"path", r.URL.Path,
 				"status", status,
 				"duration", time.Since(start),
-				"request_id", RequestIDFrom(r.Context()),
 			)
 		})
 	}
@@ -103,7 +95,6 @@ func Recover(log *slog.Logger) func(http.Handler) http.Handler {
 				log.ErrorContext(r.Context(), "panic recovered",
 					"panic", rec,
 					"stack", string(debug.Stack()),
-					"request_id", RequestIDFrom(r.Context()),
 				)
 				problem.Write(w, http.StatusInternalServerError, "internal", "internal server error")
 			}()

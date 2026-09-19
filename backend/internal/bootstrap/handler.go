@@ -35,7 +35,6 @@ func NewHandler(log *slog.Logger) http.Handler {
 		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
 			log.ErrorContext(r.Context(), "unhandled handler error",
 				"error", err,
-				"request_id", httpserver.RequestIDFrom(r.Context()),
 			)
 			problem.Write(w, http.StatusInternalServerError, "internal", "internal server error")
 		},
