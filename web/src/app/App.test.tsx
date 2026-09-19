@@ -45,4 +45,20 @@ describe("App", () => {
 
     expect(await screen.findByText("backend: unavailable")).toBeInTheDocument();
   });
+
+  it("reports an unavailable backend for an empty 502 from the proxy", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_request: Request) => new Response(null, { status: 502 })),
+    );
+
+    renderApp();
+
+    expect(await screen.findByText("backend: unavailable")).toBeInTheDocument();
+    // Reaching "unavailable" through TanStack Query's "data cannot be undefined"
+    // complaint would be an accident, not error handling.
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
 });
